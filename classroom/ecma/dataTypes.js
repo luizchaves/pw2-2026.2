@@ -73,6 +73,7 @@ console.log(Number.isNaN(0 / 0)); // true
 console.log(1 / 0); // Infinity
 console.log(-1 / 0); // -Infinity
 
+// IEEE 754 - Floating-point arithmetic can lead to precision issues. (https://0.30000000000000004.com/)
 console.log(0.1 + 0.2); // 0.30000000000000004
 console.log(0.1 + 0.2 === 0.3); // false
 

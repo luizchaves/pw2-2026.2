@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investimentos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-6 md:p-10">
+  <main class="max-w-6xl mx-auto">
+    <header class="mb-8">
+      <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Meus Investimentos</h1>
+      <p class="text-slate-500">Acompanhe o desempenho da sua carteira</p>
+    </header>
+
+    <section class="investments-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- <article class="bg-white rounded-xl shadow-sm p-5 flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-semibold text-slate-800">Tesouro Selic 2029</h2>
+            <span class="text-xs text-slate-400">Renda Fixa</span>
+          </div>
+          <span class="text-xs font-medium bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">+0,92%</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-800">R$ 12.480,32</p>
+          <p class="text-sm text-slate-400">Investido: R$ 11.500,00</p>
+        </div>
+        <div class="flex items-center justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
+          <span></span>
+          <span>Tesouro Direto</span>
+        </div>
+      </article>
+
+      <article class="bg-white rounded-xl shadow-sm p-5 flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-semibold text-slate-800">PETR4</h2>
+            <span class="text-xs text-slate-400">Ações</span>
+          </div>
+          <span class="text-xs font-medium bg-rose-100 text-rose-700 px-2 py-1 rounded-full">-1,84%</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-800">R$ 3.245,10</p>
+          <p class="text-sm text-slate-400">Investido: R$ 3.400,00</p>
+        </div>
+        <div class="flex items-center justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
+          <span>120 cotas</span>
+          <span>B3</span>
+        </div>
+      </article>
+
+      <article class="bg-white rounded-xl shadow-sm p-5 flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-semibold text-slate-800">HGLG11</h2>
+            <span class="text-xs text-slate-400">Fundos Imobiliários</span>
+          </div>
+          <span class="text-xs font-medium bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">+2,15%</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-800">R$ 8.760,45</p>
+          <p class="text-sm text-slate-400">Investido: R$ 8.100,00</p>
+        </div>
+        <div class="flex items-center justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
+          <span>65 cotas</span>
+          <span>FII</span>
+        </div>
+      </article>
+
+      <article class="bg-white rounded-xl shadow-sm p-5 flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-semibold text-slate-800">Bitcoin</h2>
+            <span class="text-xs text-slate-400">Cripto</span>
+          </div>
+          <span class="text-xs font-medium bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">+5,32%</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-800">R$ 6.120,00</p>
+          <p class="text-sm text-slate-400">Investido: R$ 5.000,00</p>
+        </div>
+        <div class="flex items-center justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
+          <span>0,012 BTC</span>
+          <span>Binance</span>
+        </div>
+      </article>
+
+      <article class="bg-white rounded-xl shadow-sm p-5 flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-semibold text-slate-800">ITSA4</h2>
+            <span class="text-xs text-slate-400">Ações</span>
+          </div>
+          <span class="text-xs font-medium bg-rose-100 text-rose-700 px-2 py-1 rounded-full">-0,47%</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-800">R$ 2.190,60</p>
+          <p class="text-sm text-slate-400">Investido: R$ 2.250,00</p>
+        </div>
+        <div class="flex items-center justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
+          <span>210 cotas</span>
+          <span>B3</span>
+        </div>
+      </article>
+
+      <article class="bg-white rounded-xl shadow-sm p-5 flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-semibold text-slate-800">CDB Banco XP</h2>
+            <span class="text-xs text-slate-400">Renda Fixa</span>
+          </div>
+          <span class="text-xs font-medium bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">+1,10%</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-800">R$ 5.430,88</p>
+          <p class="text-sm text-slate-400">Investido: R$ 5.000,00</p>
+        </div>
+        <div class="flex items-center justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
+          <span></span>
+          <span>CDB</span>
+        </div>
+      </article> -->
+    </section>
+  </main>
+  <script>
+    const investments = [
+      {
+        name: "Tesouro Selic 2029",
+        type: "Tesouro Direto",
+        category: "Renda Fixa",
+        performance: 0.92,
+        currentValue: 12_480.32,
+        investedValue: 11_500.00,
+        category: "CDB",
+      },
+      {
+        name: "PETR4",
+        type: "Ação Ordinária",
+        category: "Ações",
+        performance: 1.84,
+        currentValue: 3_245.10,
+        investedValue: 3_400.00,
+        category: "B3",
+      },
+      {
+        name: "HGLG11",
+        type: "Fundo Imobiliário",
+        category: "Fundos Imobiliários",
+        performance: 2.15,
+        currentValue: 8_760.45,
+        investedValue: 8_100.00,
+        category: "FII",
+      },
+      {
+        name: "Bitcoin",
+        type: "Criptomoeda",
+        category: "Cripto",
+        performance: 5.32,
+        currentValue: 6_120.00,
+        investedValue: 5_000.00,
+        category: "Binance",
+      },
+      {
+        name: "ITSA4",
+        type: "Ação Preferencial",
+        category: "Ações",
+        performance: 0.47,
+        currentValue: 2_190.60,
+        investedValue: 2_250.00,
+        category: "B3",
+      },
+      {
+        name: "CDB Banco XP",
+        type: "Certificado de Depósito Bancário",
+        category: "Renda Fixa",
+        performance: 1.10,
+        currentValue: 5_430.88,
+        investedValue: 5_000.00,
+        category: "CDB",
+      },
+      {
+        name: "GOLD11",
+        type: "ETF de Ouro",
+        category: "Commodities",
+        performance: 1.48,
+        currentValue: 2_860.75,
+        investedValue: 2_700.00,
+        category: "B3",
+      },
+      {
+        name: "Fundo Multimercado XP",
+        type: "Fundo Multimercado",
+        category: "Multimercado",
+        performance: -0.65,
+        currentValue: 7_320.15,
+        investedValue: 7_500.00,
+        category: "XP Investimentos",
+      },
+      {
+        name: "AAPL34",
+        type: "BDR",
+        category: "Ações Internacionais",
+        performance: 3.24,
+        currentValue: 4_150.20,
+        investedValue: 3_900.00,
+        category: "B3",
+      }
+    ];
+
+    function createInvestmentCard(investment) {
+      const card = document.createElement('article');
+      card.className = 'relative bg-white rounded-xl shadow-sm p-5 flex flex-col gap-4';
+
+      const performanceClass = investment.performance >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700';
+      const trendIcon = investment.performance >= 0 ? 'trending-up' : 'trending-down';
+
+      card.innerHTML = `
+        <button class="absolute top-3 right-3 text-slate-300 hover:text-rose-500 transition-colors" aria-label="Remover investimento">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+        <div class="flex items-center justify-between pr-6">
+          <div>
+            <h2 class="font-semibold text-slate-800">${investment.name}</h2>
+            <span class="text-xs text-slate-400">${investment.category}</span>
+          </div>
+          <span class="flex items-center gap-1 text-xs font-medium ${performanceClass} px-2 py-1 rounded-full">
+            <i data-lucide="${trendIcon}" class="w-3 h-3"></i>
+            ${formatPercentage(investment.performance)}
+          </span>
+        </div>
+        <div>
+          <p class="flex items-center gap-1 text-2xl font-bold text-slate-800">
+            <i data-lucide="wallet" class="w-4 h-4 text-slate-400"></i>
+            ${formatCurrency(investment.currentValue)}
+          </p>
+          <p class="text-sm text-slate-400">Investido: R$ ${formatCurrency(investment.investedValue)}</p>
+        </div>
+        <div class="flex items-center justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
+          <span></span>
+          <span>${investment.type}</span>
+        </div>
+      `;
+
+      return card;
+    }
+
+    function formatCurrency(value) {
+      return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatPercentage(value) {
+      const sign = value >= 0 ? '+' : '';
+      return sign + value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+    }
+
+    lucide.createIcons();
+
+    const investmentsGrid = document.querySelector('.investments-grid');
+
+    investments.forEach(investment => {
+      const card = createInvestmentCard(investment);
+      investmentsGrid.appendChild(card);
+    });
+
+    investmentsGrid.addEventListener('click', (event) => {
+      if (event.target.closest('button')) {
+        const card = event.target.closest('article');
+        card.remove();
+      }
+    });
+
+  </script>
+</body>
+</html>

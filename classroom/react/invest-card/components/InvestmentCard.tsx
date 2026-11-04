@@ -1,21 +1,16 @@
 import { formatCurrency, formatPercentage } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import type { Investment } from '@/data/investments';
+import type { Investment } from '@/types/investments';
 import { TrendingDown, TrendingUp, Trash2, Wallet } from 'lucide-react';
 
 type InvestmentCardProps = {
   investment: Investment;
+  isOpenEye: boolean;
 };
 
 export default function InvestmentCard({
-  investment: {
-    name,
-    issuer,
-    type,
-    performance,
-    currentValue,
-    investedValue,
-  },
+  investment: { name, issuer, type, performance, currentValue, investedValue },
+  isOpenEye,
 }: InvestmentCardProps) {
   return (
     <article className="relative bg-white rounded-xl shadow-sm p-5 flex flex-col gap-4">
@@ -35,7 +30,7 @@ export default function InvestmentCard({
             'flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full',
             performance > 0
               ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-rose-100 text-rose-700'
+              : 'bg-rose-100 text-rose-700',
           )}
         >
           {performance > 0 ? (
@@ -49,10 +44,10 @@ export default function InvestmentCard({
       <div>
         <p className="flex items-center gap-1 text-2xl font-bold text-slate-800">
           <Wallet className="w-4 h-4 text-slate-400" />
-          {formatCurrency(currentValue)}
+          {isOpenEye ? formatCurrency(currentValue) : 'R$ ****'}
         </p>
         <p className="text-sm text-slate-400">
-          Investido: {formatCurrency(investedValue)}
+          Investido: {isOpenEye ? formatCurrency(investedValue) : 'R$ ****'}
         </p>
       </div>
       <div className="flex items-center justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">

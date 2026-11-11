@@ -2,6 +2,7 @@ import type { Investment } from '@/types/investments';
 
 export const investments: Investment[] = [
   {
+    id: 'tesouro-selic-2029',
     name: 'Tesouro Selic 2029',
     type: 'Tesouro Direto',
     category: 'Renda Fixa',
@@ -11,6 +12,7 @@ export const investments: Investment[] = [
     issuer: 'CDB',
   },
   {
+    id: 'petr4',
     name: 'PETR4',
     type: 'Ação Ordinária',
     category: 'Ações',
@@ -20,6 +22,7 @@ export const investments: Investment[] = [
     issuer: 'B3',
   },
   {
+    id: 'hglg11',
     name: 'HGLG11',
     type: 'Fundo Imobiliário',
     category: 'Fundos Imobiliários',
@@ -29,6 +32,7 @@ export const investments: Investment[] = [
     issuer: 'FII',
   },
   {
+    id: 'bitcoin',
     name: 'Bitcoin',
     type: 'Criptomoeda',
     category: 'Cripto',
@@ -38,6 +42,7 @@ export const investments: Investment[] = [
     issuer: 'Binance',
   },
   {
+    id: 'itsa4',
     name: 'ITSA4',
     type: 'Ação Preferencial',
     category: 'Ações',
@@ -47,6 +52,7 @@ export const investments: Investment[] = [
     issuer: 'B3',
   },
   {
+    id: 'cdb-banco-xp',
     name: 'CDB Banco XP',
     type: 'Certificado de Depósito Bancário',
     category: 'Renda Fixa',
@@ -56,8 +62,9 @@ export const investments: Investment[] = [
     issuer: 'CDB',
   },
   {
+    id: 'gold11',
     name: 'GOLD11',
-    type: 'ETF de Ouro',
+    type: 'ETF',
     category: 'Commodities',
     performance: 1.48,
     currentValue: 2_860.75,
@@ -65,6 +72,7 @@ export const investments: Investment[] = [
     issuer: 'B3',
   },
   {
+    id: 'fundo-multimercado-xp',
     name: 'Fundo Multimercado XP',
     type: 'Fundo Multimercado',
     category: 'Multimercado',
@@ -74,6 +82,7 @@ export const investments: Investment[] = [
     issuer: 'XP Investimentos',
   },
   {
+    id: 'aapl34',
     name: 'AAPL34',
     type: 'BDR',
     category: 'Ações Internacionais',
@@ -82,4 +91,26 @@ export const investments: Investment[] = [
     investedValue: 3_900.0,
     issuer: 'B3',
   },
+];
+
+export const investmentTypes: string[] = [
+  'Tesouro Direto',
+  'Certificado de Depósito Bancário',
+  'Ação Ordinária',
+  'Ação Preferencial',
+  'BDR',
+  'Fundo Imobiliário',
+  'Fundo Multimercado',
+  'ETF',
+  'Criptomoeda',
+];
+
+export const investmentCategories: string[] = [
+  'Renda Fixa',
+  'Ações',
+  'Ações Internacionais',
+  'Fundos Imobiliários',
+  'Multimercado',
+  'Commodities',
+  'Cripto',
 ];

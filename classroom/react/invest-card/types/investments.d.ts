@@ -1,4 +1,5 @@
 export type Investment = {
+  id: string;
   name: string;
   type: string;
   category: string;
@@ -6,4 +7,14 @@ export type Investment = {
   currentValue: number;
   investedValue: number;
   issuer: string;
+};
+
+export type InvestmentFormData = {
+  name: string;
+  issuer: string;
+  type: string;
+  category: string;
+  performance: string;
+  currentValue: string;
+  investedValue: string;
 };

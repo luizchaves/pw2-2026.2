@@ -1,25 +1,81 @@
+'use client';
+
 import { formatCurrency, formatPercentage } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { Investment } from '@/types/investments';
-import { TrendingDown, TrendingUp, Trash2, Wallet } from 'lucide-react';
+import {
+  TrendingDown,
+  TrendingUp,
+  Trash2,
+  TriangleAlert,
+  Wallet,
+} from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 type InvestmentCardProps = {
   investment: Investment;
   isOpenEye: boolean;
+  onRemove: (id: string) => void;
 };
 
 export default function InvestmentCard({
-  investment: { name, issuer, type, performance, currentValue, investedValue },
+  investment: {
+    id,
+    name,
+    issuer,
+    type,
+    performance,
+    currentValue,
+    investedValue,
+  },
   isOpenEye,
+  onRemove,
 }: InvestmentCardProps) {
+  const handleRemoveClick = () => {
+    onRemove(id);
+  };
+
   return (
     <article className="relative bg-white rounded-xl shadow-sm p-5 flex flex-col gap-4">
-      <button
-        className="absolute top-3 right-3 text-slate-300 hover:text-rose-500 transition-colors"
-        aria-label="Remover investimento"
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
+      <AlertDialog>
+        <AlertDialogTrigger
+          className="absolute top-3 right-3 text-slate-300 hover:text-rose-500 transition-colors"
+          aria-label={`Remover ${name}`}
+        >
+          <Trash2 className="w-4 h-4" />
+        </AlertDialogTrigger>
+
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia>
+              <TriangleAlert className="text-rose-500" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Remover investimento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {name} será removido da sua carteira. Esta ação não pode ser
+              desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleRemoveClick}>
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex items-center justify-between pr-6">
         <div>
           <h2 className="font-semibold text-slate-800">{name}</h2>

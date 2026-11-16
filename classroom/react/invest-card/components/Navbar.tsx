@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Wallet } from 'lucide-react';
+import EyeToggle from '@/components/EyeToggle';
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -29,21 +30,25 @@ export default function Navbar() {
           <span>InvestCard</span>
         </Link>
 
-        <NavigationMenu>
-          <NavigationMenuList className="gap-1">
-            {links.map(({ href, label }) => (
-              <NavigationMenuItem key={href}>
-                <NavigationMenuLink
-                  active={pathname === href}
-                  className="px-3 py-2 font-medium text-slate-600 data-active:bg-slate-200/70 data-active:text-slate-900"
-                  render={<Link href={href} />}
-                >
-                  {label}
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            ))}
-          </NavigationMenuList>
-        </NavigationMenu>
+        <div className="flex items-center gap-2">
+          <NavigationMenu>
+            <NavigationMenuList className="gap-1">
+              {links.map(({ href, label }) => (
+                <NavigationMenuItem key={href}>
+                  <NavigationMenuLink
+                    active={pathname === href}
+                    className="px-3 py-2 font-medium text-slate-600 data-active:bg-slate-200/70 data-active:text-slate-900"
+                    render={<Link href={href} />}
+                  >
+                    {label}
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              ))}
+            </NavigationMenuList>
+          </NavigationMenu>
+
+          <EyeToggle />
+        </div>
       </nav>
     </header>
   );

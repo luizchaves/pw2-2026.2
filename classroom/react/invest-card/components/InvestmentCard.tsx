@@ -1,6 +1,8 @@
 'use client';
 
 import { formatCurrency, formatPercentage } from '@/lib/format';
+import { useInvestments } from '@/contexts/InvestmentsContext';
+import { useVisibility } from '@/contexts/VisibilityContext';
 import { cn } from '@/lib/utils';
 import type { Investment } from '@/types/investments';
 import {
@@ -25,8 +27,6 @@ import {
 
 type InvestmentCardProps = {
   investment: Investment;
-  isOpenEye: boolean;
-  onRemove: (id: string) => void;
 };
 
 export default function InvestmentCard({
@@ -39,11 +39,12 @@ export default function InvestmentCard({
     currentValue,
     investedValue,
   },
-  isOpenEye,
-  onRemove,
 }: InvestmentCardProps) {
+  const { isOpenEye } = useVisibility();
+  const { removeInvestment } = useInvestments();
+
   const handleRemoveClick = () => {
-    onRemove(id);
+    removeInvestment(id);
   };
 
   return (

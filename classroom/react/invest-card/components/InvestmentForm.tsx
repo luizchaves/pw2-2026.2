@@ -2,7 +2,8 @@
 
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { Plus } from 'lucide-react';
-import type { Investment, InvestmentFormData } from '@/types/investments';
+import type { InvestmentFormData } from '@/types/investments';
+import { useInvestments } from '@/contexts/InvestmentsContext';
 import { investmentCategories, investmentTypes } from '@/data/investments';
 import { LOCALE_NUMBER_PATTERN, parseLocaleNumber } from '@/lib/format';
 import { Button } from '@/components/ui/button';
@@ -25,10 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-type InvestmentFormProps = {
-  onAdd: (investment: Investment) => void;
-};
 
 const initialFormData: InvestmentFormData = {
   name: '',
@@ -81,7 +78,8 @@ const numberFields = [
   },
 ] as const;
 
-export default function InvestmentForm({ onAdd }: InvestmentFormProps) {
+export default function InvestmentForm() {
+  const { addInvestment } = useInvestments();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<InvestmentFormData>(initialFormData);
 
@@ -110,7 +108,7 @@ export default function InvestmentForm({ onAdd }: InvestmentFormProps) {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    onAdd({
+    addInvestment({
       id: crypto.randomUUID(),
       name: formData.name,
       issuer: formData.issuer,

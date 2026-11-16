@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  type PropsWithChildren,
-} from 'react';
+import { createContext, use, useState, type PropsWithChildren } from 'react';
 import { investments as initialInvestments } from '@/data/investments';
 import type { Investment } from '@/types/investments';
 
@@ -32,16 +27,14 @@ export function InvestmentsProvider({ children }: PropsWithChildren) {
   };
 
   return (
-    <InvestmentsContext.Provider
-      value={{ investments, addInvestment, removeInvestment }}
-    >
+    <InvestmentsContext value={{ investments, addInvestment, removeInvestment }}>
       {children}
-    </InvestmentsContext.Provider>
+    </InvestmentsContext>
   );
 }
 
 export function useInvestments(): InvestmentsContextValue {
-  const context = useContext(InvestmentsContext);
+  const context = use(InvestmentsContext);
 
   if (!context) {
     throw new Error(

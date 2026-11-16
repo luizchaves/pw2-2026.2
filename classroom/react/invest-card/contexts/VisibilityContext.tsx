@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  type PropsWithChildren,
-} from 'react';
+import { createContext, use, useState, type PropsWithChildren } from 'react';
 
 type VisibilityContextValue = {
   isOpenEye: boolean;
@@ -22,14 +17,14 @@ export function VisibilityProvider({ children }: PropsWithChildren) {
   };
 
   return (
-    <VisibilityContext.Provider value={{ isOpenEye, toggleEye }}>
+    <VisibilityContext value={{ isOpenEye, toggleEye }}>
       {children}
-    </VisibilityContext.Provider>
+    </VisibilityContext>
   );
 }
 
 export function useVisibility(): VisibilityContextValue {
-  const context = useContext(VisibilityContext);
+  const context = use(VisibilityContext);
 
   if (!context) {
     throw new Error('useVisibility deve ser usado dentro de VisibilityProvider');

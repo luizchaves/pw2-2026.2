@@ -1,6 +1,8 @@
 'use client';
 
+import { Controller } from 'react-hook-form';
 import { Pencil, Plus } from 'lucide-react';
+import FieldError from '@/components/FieldError';
 import { useInvestmentForm } from '@/features/investments/hooks/useInvestmentForm';
 import {
   numberFields,
@@ -10,7 +12,6 @@ import {
 } from '@/features/investments/form-fields';
 import { indexerSuggestions } from '@/features/investments/options';
 import type { Investment } from '@/features/investments/types';
-import { LOCALE_NUMBER_PATTERN } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,21 +38,27 @@ type InvestmentFormProps = {
   investment?: Investment;
 };
 
-/** Só a apresentação: estado, validação e escrita moram no useInvestmentForm. */
+/**
+ * Só a apresentação: o estado é do React Hook Form e as regras são do schema
+ * em `features/investments/schema.ts`. Nenhum campo valida a si mesmo aqui.
+ */
 export default function InvestmentForm({ investment }: InvestmentFormProps) {
   const {
+    form,
     isOpen,
     handleOpenChange,
-    formData,
-    handleChange,
-    handleTypeChange,
-    handleCategoryChange,
     handleSubmit,
     isEditing,
     isPending,
     hasTicker,
-    formError,
+    submitError,
   } = useInvestmentForm(investment);
+
+  const {
+    register,
+    control,
+    formState: { errors },
+  } = form;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -86,49 +93,61 @@ export default function InvestmentForm({ investment }: InvestmentFormProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="grid gap-4">
+        {/* noValidate: quem valida é o schema, e o balão nativo do browser
+            competiria com as mensagens abaixo de cada campo. */}
+        <form onSubmit={handleSubmit} noValidate className="grid gap-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {textFields.map(({ name, label, placeholder }) => (
               <div key={name} className="grid gap-1.5">
                 <Label htmlFor={name}>{label}</Label>
                 <Input
                   id={name}
-                  name={name}
-                  value={formData[name]}
-                  onChange={handleChange}
                   placeholder={placeholder}
-                  required
+                  aria-invalid={Boolean(errors[name])}
+                  {...register(name)}
                 />
+                <FieldError message={errors[name]?.message} />
               </div>
             ))}
 
             {selectFields.map(({ name, label, placeholder, options }) => (
               <div key={name} className="grid gap-1.5">
                 <Label htmlFor={name}>{label}</Label>
-                <Select
+                {/* Select é controlado (não é um <input>), então o campo passa
+                    pelo Controller em vez de register. */}
+                <Controller
+                  control={control}
                   name={name}
-                  value={formData[name]}
-                  onValueChange={
-                    name === 'type' ? handleTypeChange : handleCategoryChange
-                  }
-                  required
-                >
-                  <SelectTrigger id={name} className="w-full">
-                    <SelectValue placeholder={placeholder} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {options.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  render={({ field }) => (
+                    <Select
+                      name={field.name}
+                      value={field.value}
+                      onValueChange={(value) => field.onChange(value ?? '')}
+                    >
+                      <SelectTrigger
+                        id={name}
+                        className="w-full"
+                        onBlur={field.onBlur}
+                        aria-invalid={Boolean(errors[name])}
+                      >
+                        <SelectValue placeholder={placeholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {options.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <FieldError message={errors[name]?.message} />
               </div>
             ))}
 
             {numberFields.map(({ name, label, prefix, placeholder }) => {
-              // Sem ticker não há de onde tirar o valor atual: ele é obrigatório.
+              // Sem ticker não há de onde tirar o valor atual: é obrigatório.
               const isOptional = name === 'currentValue' && hasTicker;
 
               return (
@@ -142,22 +161,19 @@ export default function InvestmentForm({ investment }: InvestmentFormProps) {
                     </span>
                     <Input
                       id={name}
-                      name={name}
                       inputMode="decimal"
-                      pattern={LOCALE_NUMBER_PATTERN}
-                      value={formData[name]}
-                      onChange={handleChange}
                       placeholder={placeholder}
-                      title="Use o formato pt-BR, por exemplo 3.245,10"
                       className="pl-9"
-                      required={!isOptional}
+                      aria-invalid={Boolean(errors[name])}
+                      {...register(name)}
                     />
                   </div>
-                  {isOptional && (
+                  {isOptional && !errors[name] && (
                     <span className="text-xs text-slate-400">
                       A cotação preenche na primeira atualização
                     </span>
                   )}
+                  <FieldError message={errors[name]?.message} />
                 </div>
               );
             })}
@@ -169,12 +185,14 @@ export default function InvestmentForm({ investment }: InvestmentFormProps) {
                 <Label htmlFor={name}>{label}</Label>
                 <Input
                   id={name}
-                  name={name}
-                  value={formData[name]}
-                  onChange={handleChange}
                   placeholder={placeholder}
+                  aria-invalid={Boolean(errors[name])}
+                  {...register(name)}
                 />
-                <span className="text-xs text-slate-400">{hint}</span>
+                {!errors[name] && (
+                  <span className="text-xs text-slate-400">{hint}</span>
+                )}
+                <FieldError message={errors[name]?.message} />
               </div>
             ))}
 
@@ -182,11 +200,10 @@ export default function InvestmentForm({ investment }: InvestmentFormProps) {
               <Label htmlFor="indexer">Indexador (opcional)</Label>
               <Input
                 id="indexer"
-                name="indexer"
                 list="indexer-suggestions"
-                value={formData.indexer}
-                onChange={handleChange}
                 placeholder="100% Selic"
+                aria-invalid={Boolean(errors.indexer)}
+                {...register('indexer')}
               />
               {/* datalist: sugere os indexadores mais comuns sem fechar a
                   lista — a taxa muda de papel para papel. */}
@@ -195,15 +212,19 @@ export default function InvestmentForm({ investment }: InvestmentFormProps) {
                   <option key={suggestion} value={suggestion} />
                 ))}
               </datalist>
-              <span className="text-xs text-slate-400">
-                Como a renda fixa rende. Deixe vazio quando há ticker.
-              </span>
+              {!errors.indexer && (
+                <span className="text-xs text-slate-400">
+                  Como a renda fixa rende. Deixe vazio quando há ticker.
+                </span>
+              )}
+              <FieldError message={errors.indexer?.message} />
             </div>
           </div>
 
-          {formError && (
+          {/* Erro da escrita no banco, não de validação: vale para o form todo. */}
+          {submitError && (
             <p role="alert" className="text-sm text-rose-600">
-              {formError}
+              {submitError}
             </p>
           )}
 

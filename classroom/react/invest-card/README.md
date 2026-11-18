@@ -372,6 +372,53 @@ uma (`fresh`, `stale`, `fetching`) e os dados guardados — é a forma mais ráp
 de ver a invalidação acontecendo ao adicionar um investimento ou atualizar as
 cotações.
 
+## Validação dos formulários
+
+Os dois formulários — o de investimento e o de login/cadastro — usam
+[React Hook Form](https://react-hook-form.com) com
+[Zod](https://zod.dev) pelo `zodResolver`. O schema é a fonte única: o tipo dos
+campos sai dele com `z.infer`, então campo e regra não têm como divergir.
+
+```ts
+// features/investments/schema.ts
+export const investmentFormSchema = z
+  .object({ /* ... */ })
+  .refine((values) => !values.ticker || values.quantity !== '', {
+    error: 'Informe a quantidade para poder cotar o ticker.',
+    path: ['quantity'],
+  });
+
+export type InvestmentFormValues = z.infer<typeof investmentFormSchema>;
+```
+
+O ganho maior está nas regras que **cruzam campos**, que antes viviam soltas no
+`onSubmit` e só apareciam uma por vez, como um erro geral no rodapé:
+
+| regra                                       | mensagem cai em |
+| ------------------------------------------- | --------------- |
+| ticker exige quantidade                      | `quantity`      |
+| ticker e indexador não convivem              | `indexer`       |
+| sem ticker, valor atual é obrigatório        | `currentValue`  |
+| no cadastro, as senhas precisam bater        | `confirmation`  |
+
+Com `path`, cada mensagem nasce embaixo do campo que a causou, e todas
+aparecem de uma vez. A regra do indexador é a mesma `check constraint` que o
+banco tem — o schema só avisa antes de gastar uma ida ao servidor.
+
+Outras decisões que valem nota:
+
+- **`mode: 'onTouched'`** — valida ao sair do campo, não a cada tecla:
+  corrigir alguém no meio da digitação incomoda mais do que ajuda.
+- **`noValidate` no `<form>`** — quem valida é o schema; o balão nativo do
+  browser competiria com as mensagens.
+- **Select pelo `Controller`** — ele é controlado e não é um `<input>`, então
+  não dá para usar `register`.
+- **Erro de validação ≠ erro de escrita.** O primeiro fica no campo
+  (`FieldError`), o segundo — credenciais recusadas, falha do Supabase — vem
+  de `mutation.error` e fica no rodapé do formulário.
+- A conversão dos campos (texto em pt-BR) para o que o banco recebe mora no
+  mesmo arquivo do schema, em `toNewInvestment()`.
+
 ## Estrutura dos dados
 
 Tabela `public.investments` (`supabase/migrations/`):
@@ -436,6 +483,7 @@ features/
     api.ts        acesso ao Supabase e conversão snake_case ↔ camelCase
     portfolio.ts  somas e proporções do dashboard (cálculo puro)
     form-fields.ts  a descrição dos campos do formulário
+    schema.ts     as regras de validação (Zod) e a conversão campos ↔ banco
     options.ts    tipos e categorias fixos do formulário
     types.ts      Investment, NewInvestment, InvestmentRow
     quotes/       providers de cotação e a cadeia de fallback (servidor)
@@ -443,10 +491,12 @@ features/
   auth/
     components/   AuthForm, UserMenu
     hooks/        useAuth (sessão, login, cadastro, logout)
+    schema.ts     as regras do login e do cadastro (Zod)
     session.ts    a sessão lida no servidor, para as telas públicas
     AuthProvider.tsx  liga os eventos de sessão ao cache
 app/              rotas, em (public) e (private)
-components/       NavShell, Navbar, PublicNavbar, EyeToggle, Money e ui/
+components/       NavShell, Navbar, PublicNavbar, EyeToggle, Money,
+                  FieldError e ui/
 contexts/         QueryProvider, VisibilityContext, AppProviders
 lib/              supabase/ (client, server, proxy), routes.ts,
                   format.ts, cn.ts

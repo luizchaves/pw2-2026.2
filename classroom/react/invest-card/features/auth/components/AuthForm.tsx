@@ -1,20 +1,25 @@
 'use client';
 
-import { useState, type ChangeEvent, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { LogIn, UserPlus, Wallet } from 'lucide-react';
+import FieldError from '@/components/FieldError';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSignIn, useSignUp } from '@/features/auth/hooks/useAuth';
+import {
+  authSchema,
+  emptyAuthForm,
+  type AuthFormValues,
+} from '@/features/auth/schema';
 import { HOME_ROUTE, ROUTES } from '@/lib/routes';
 
 type AuthFormProps = {
   mode: 'signin' | 'signup';
 };
-
-
 
 /**
  * Só aceita destino dentro da própria aplicação. Testar `startsWith('/')` não
@@ -71,45 +76,29 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const { title, description, submit, pending, footer, linkLabel, linkHref, Icon } =
     copy[mode];
 
-  const [form, setForm] = useState({
-    email: '',
-    password: '',
-    confirmation: '',
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<AuthFormValues>({
+    // O schema recebe o modo: a confirmação de senha só é cobrada no cadastro.
+    resolver: zodResolver(authSchema(isSignUp)),
+    defaultValues: emptyAuthForm,
+    mode: 'onTouched',
   });
-  const [validationError, setValidationError] = useState<string | null>(null);
 
-  const errorMessage = validationError ?? mutation.error?.message ?? null;
-
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-
-    setForm({ ...form, [name]: value });
-  };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setValidationError(null);
-
-    if (isSignUp && form.password !== form.confirmation) {
-      setValidationError('As senhas não conferem.');
-
-      return;
-    }
-
+  const onSubmit = handleSubmit(async ({ email, password }) => {
     try {
-      await mutation.mutateAsync({
-        email: form.email.trim(),
-        password: form.password,
-      });
+      await mutation.mutateAsync({ email: email.trim(), password });
 
       // `next` guarda a página que o proxy interceptou antes do login.
       router.replace(safeNext(searchParams.get('next')));
       // Sem o refresh o proxy continuaria decidindo com a sessão antiga.
       router.refresh();
     } catch {
-      // A mensagem já vem de mutation.error.
+      // A mensagem vem de mutation.error.
     }
-  };
+  });
 
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center">
@@ -120,37 +109,34 @@ export default function AuthForm({ mode }: AuthFormProps) {
           <p className="text-sm text-slate-500">{description}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-4">
+        <form onSubmit={onSubmit} noValidate className="grid gap-4">
           <div className="grid gap-1.5">
             <Label htmlFor="email">E-mail</Label>
             <Input
               id="email"
-              name="email"
               type="email"
               autoComplete="email"
-              value={form.email}
-              onChange={handleChange}
               placeholder="voce@exemplo.com"
-              required
+              aria-invalid={Boolean(errors.email)}
+              {...register('email')}
             />
+            <FieldError message={errors.email?.message} />
           </div>
 
           <div className="grid gap-1.5">
             <Label htmlFor="password">Senha</Label>
             <Input
               id="password"
-              name="password"
               type="password"
               autoComplete={isSignUp ? 'new-password' : 'current-password'}
-              value={form.password}
-              onChange={handleChange}
               placeholder="••••••••"
-              minLength={6}
-              required
+              aria-invalid={Boolean(errors.password)}
+              {...register('password')}
             />
-            {isSignUp && (
+            {isSignUp && !errors.password && (
               <span className="text-xs text-slate-400">Mínimo 6 caracteres</span>
             )}
+            <FieldError message={errors.password?.message} />
           </div>
 
           {isSignUp && (
@@ -158,21 +144,21 @@ export default function AuthForm({ mode }: AuthFormProps) {
               <Label htmlFor="confirmation">Confirmar senha</Label>
               <Input
                 id="confirmation"
-                name="confirmation"
                 type="password"
                 autoComplete="new-password"
-                value={form.confirmation}
-                onChange={handleChange}
                 placeholder="••••••••"
-                minLength={6}
-                required
+                aria-invalid={Boolean(errors.confirmation)}
+                {...register('confirmation')}
               />
+              <FieldError message={errors.confirmation?.message} />
             </div>
           )}
 
-          {errorMessage && (
+          {/* Erro vindo do Supabase (credenciais, e-mail já usado), não de
+              validação: vale para o formulário todo. */}
+          {mutation.error && (
             <p role="alert" className="text-sm text-rose-600">
-              {errorMessage}
+              {mutation.error.message}
             </p>
           )}
 

@@ -47,14 +47,6 @@ export type InvestmentRow = {
   quote_updated_at: string | null;
 };
 
-export type InvestmentFormData = {
-  name: string;
-  issuer: string;
-  type: string;
-  category: string;
-  currentValue: string;
-  investedValue: string;
-  ticker: string;
-  indexer: string;
-  quantity: string;
-};
+// O tipo dos campos do formulário não mora aqui: ele é inferido do schema de
+// validação, em `features/investments/schema.ts` (InvestmentFormValues), para
+// campo e regra não terem como divergir.

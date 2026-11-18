@@ -59,41 +59,24 @@ export default function InvestmentCard({
     void removeInvestment(id);
   };
 
+  // Procedência da cotação: fora do rodapé para não poluir, mas disponível no
+  // hover — é o que deixa o fallback entre providers visível sem DevTools.
+  const quoteLabel = ticker
+    ? quoteSource && quoteUpdatedAt
+      ? `${ticker} · ${quoteSource} · ${formatQuoteTime(quoteUpdatedAt)}`
+      : `${ticker} · valor inicial`
+    : undefined;
+
   return (
-    <article className="relative bg-white rounded-xl shadow-sm p-5 flex flex-col gap-4">
-      <AlertDialog>
-        <AlertDialogTrigger
-          className="absolute top-3 right-3 text-slate-300 hover:text-rose-500 transition-colors"
-          aria-label={`Remover ${name}`}
-        >
-          <Trash2 className="w-4 h-4" />
-        </AlertDialogTrigger>
-
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogMedia>
-              <TriangleAlert className="text-rose-500" />
-            </AlertDialogMedia>
-            <AlertDialogTitle>Remover investimento?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {name} será removido da sua carteira. Esta ação não pode ser
-              desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={handleRemoveClick}>
-              Remover
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <div className="flex items-center justify-between pr-6">
+    <article className="h-full bg-white rounded-xl shadow-sm p-5 flex flex-col gap-4">
+      {/* items-start: o badge acompanha a linha do nome, não o centro do
+          bloco nome+emissor (que tem duas linhas, e três quando o nome quebra). */}
+      <div className="flex items-start justify-between gap-2">
         <div>
           <h2 className="font-semibold text-slate-800">{name}</h2>
           <span className="text-xs text-slate-400">{issuer}</span>
         </div>
+
         <span
           className={cn(
             'flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full',
@@ -110,13 +93,14 @@ export default function InvestmentCard({
           {formatPercentage(performance)}
         </span>
       </div>
+
       <div>
         <p className="flex items-center gap-1 text-2xl font-bold text-slate-800">
           <Wallet className="w-4 h-4 text-slate-400" />
           {isOpenEye ? formatCurrency(currentValue) : 'R$ ****'}
         </p>
         {lastQuote !== null && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-400" title={quoteLabel}>
             {isOpenEye && quantity !== null
               ? `${formatQuantity(quantity)} × ${formatCurrency(lastQuote)}`
               : `${formatCurrency(lastQuote)} / un.`}
@@ -126,16 +110,46 @@ export default function InvestmentCard({
           Investido: {isOpenEye ? formatCurrency(investedValue) : 'R$ ****'}
         </p>
       </div>
-      <div className="flex items-center justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
-        {/* Mostrar o provider deixa o fallback visível na tela. */}
-        <span className="text-xs text-slate-400">
-          {ticker && quoteSource && quoteUpdatedAt
-            ? `${ticker} · ${quoteSource} · ${formatQuoteTime(quoteUpdatedAt)}`
-            : ticker
-              ? `${ticker} · valor inicial`
-              : 'valor informado'}
+
+      {/* mt-auto cola o rodapé na base: os cards sem cotação têm uma linha a
+          menos, e sem isso o rodapé deles subia em relação aos vizinhos.
+          A lixeira mora aqui, na faixa de metadados, longe do valor — ação
+          destrutiva não deve ficar colada no número que todo mundo lê. */}
+      <div className="mt-auto flex items-center justify-between gap-2 text-sm text-slate-500 border-t border-slate-100 pt-3">
+        <span className="min-w-0 truncate" title={type}>
+          {type}
         </span>
-        <span>{type}</span>
+
+        <AlertDialog>
+          <AlertDialogTrigger
+            className="shrink-0 -mr-1 p-1 rounded-md text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+            aria-label={`Remover ${name}`}
+          >
+            <Trash2 className="w-4 h-4" />
+          </AlertDialogTrigger>
+
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogMedia>
+                <TriangleAlert className="text-rose-500" />
+              </AlertDialogMedia>
+              <AlertDialogTitle>Remover investimento?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {name} será removido da sua carteira. Esta ação não pode ser
+                desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={handleRemoveClick}
+              >
+                Remover
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
       </div>
     </article>
   );

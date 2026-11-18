@@ -33,8 +33,9 @@ export default function Navbar() {
           {/* Navegação à esquerda, colada na marca; à direita ficam as ações
             de quem está logado (esconder valores e sair). */}
           <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+            {/* A marca leva para a mesma primeira tela do login. */}
             <Link
-              href="/"
+              href="/dashboard"
               className="flex items-center gap-2 font-bold text-slate-800"
             >
               <Wallet className="size-5 shrink-0 text-emerald-600" />

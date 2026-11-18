@@ -4,6 +4,9 @@ import { createServerClient } from '@supabase/ssr';
 /** Rotas que uma pessoa deslogada precisa abrir. */
 const PUBLIC_ROUTES = ['/login', '/signup'];
 
+/** Primeira tela de quem já está logado. */
+const HOME_ROUTE = '/dashboard';
+
 /**
  * Renova a sessão e decide quem entra. Roda no proxy (o antigo middleware),
  * antes de qualquer página: o access token tem 1h de validade, e sem este
@@ -65,7 +68,7 @@ export async function updateSession(request: NextRequest) {
   if (user && isPublicRoute) {
     const redirectUrl = request.nextUrl.clone();
 
-    redirectUrl.pathname = '/';
+    redirectUrl.pathname = HOME_ROUTE;
     redirectUrl.search = '';
 
     return NextResponse.redirect(redirectUrl);

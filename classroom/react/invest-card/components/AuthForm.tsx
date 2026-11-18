@@ -13,6 +13,9 @@ type AuthFormProps = {
   mode: 'signin' | 'signup';
 };
 
+/** Para onde vai quem entrou sem ter pedido uma página específica. */
+const HOME_ROUTE = '/dashboard';
+
 /**
  * Só aceita destino dentro da própria aplicação. Testar `startsWith('/')` não
  * basta: `//evil.com` começa com barra e o browser lê como URL
@@ -20,7 +23,7 @@ type AuthFormProps = {
  */
 function safeNext(next: string | null): string {
   if (!next) {
-    return '/';
+    return HOME_ROUTE;
   }
 
   try {
@@ -28,9 +31,9 @@ function safeNext(next: string | null): string {
 
     return url.origin === window.location.origin
       ? `${url.pathname}${url.search}${url.hash}`
-      : '/';
+      : HOME_ROUTE;
   } catch {
-    return '/';
+    return HOME_ROUTE;
   }
 }
 

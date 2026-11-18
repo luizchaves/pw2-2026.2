@@ -25,7 +25,16 @@ npm run setup
 npm run dev
 ```
 
-Abra [http://localhost:3000](http://localhost:3000).
+Abra [http://localhost:3000](http://localhost:3000) e entre com uma das contas
+de exemplo criadas pelo seed (ou crie a sua em **Criar conta**):
+
+| e-mail                 | senha      | carteira            |
+| ---------------------- | ---------- | ------------------- |
+| `demo@investcard.dev`  | `demo1234` | 9 ativos            |
+| `maria@investcard.dev` | `demo1234` | 3 ativos            |
+
+As duas contas existem para dar para ver o isolamento: entre com uma, depois
+com a outra, e repare que os cards são outros.
 
 O `npm run setup` sobe os containers do Supabase (aplicando as migrations de
 `supabase/migrations` e o seed de `supabase/seed.sql`) e gera o `.env.local`
@@ -88,6 +97,77 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 
 Os valores estão em **Project Settings > API Keys** no dashboard. Use apenas a
 chave publishable (anon) no front-end; a secret key nunca vai para o cliente.
+
+## Autenticação e carteira por pessoa
+
+O login é do **Supabase Auth**, com e-mail e senha. A escolha não é só de
+biblioteca: as policies de RLS são escritas com `auth.uid()`, que vem do JWT
+que o próprio Supabase emite. Com uma sessão de outra ferramenta (NextAuth, por
+exemplo) o Postgres não saberia quem está perguntando, e o filtro por pessoa
+teria que descer para o código da aplicação.
+
+### O filtro mora no banco
+
+`investments` ganhou a coluna `user_id`, e as policies comparam cada linha com
+quem está logado:
+
+```sql
+create policy "investments_select_own"
+  on public.investments for select
+  to authenticated
+  using (auth.uid() = user_id);
+```
+
+Repare que `lib/investments.ts` **não** tem `.eq('user_id', ...)`: um
+`select('*')` já volta só com as linhas de quem pediu. O acesso anônimo foi
+revogado, então sem login a tabela nem responde:
+
+```json
+{ "code": "42501", "message": "permission denied for table investments" }
+```
+
+Isso é diferente de esconder os dados na interface. Um `fetch` montado à mão no
+console do browser, com a chave publishable na mão, esbarra na mesma regra.
+
+### Sessão em cookie, não em localStorage
+
+O `@supabase/ssr` guarda a sessão em cookie. É o que permite o servidor saber
+quem está logado — o cookie viaja em toda requisição, o `localStorage` nunca sai
+do browser. São três clientes, um por ambiente:
+
+| arquivo                 | onde roda            | para quê                         |
+| ----------------------- | -------------------- | -------------------------------- |
+| `lib/supabase.ts`       | browser              | queries e mutations da interface |
+| `lib/supabase-server.ts`| Route Handlers       | ler a sessão dos cookies         |
+| `lib/supabase-proxy.ts` | proxy (middleware)   | renovar o token e barrar rotas   |
+
+### proxy.ts: renovar a sessão e barrar rota
+
+No Next.js 16 o `middleware.ts` passou a se chamar **`proxy.ts`** — mesmo
+arquivo na raiz, mesma função, nome novo. Ele roda antes de cada página e faz
+duas coisas:
+
+1. **renova o access token** (vale 1h) e regrava o cookie, senão a pessoa seria
+   deslogada no meio do uso;
+2. **redireciona**: sem sessão, manda para `/login?next=...` (e o login devolve
+   para a página pretendida); com sessão, tira de `/login` e `/signup`.
+
+A guarda usa `supabase.auth.getUser()`, que valida o token no servidor do
+Supabase, e não `getSession()`, que apenas lê o cookie — e cookie o browser
+pode forjar.
+
+As rotas de API ficam de fora do redirect: elas respondem `401` em JSON, que é
+o que um `fetch` consegue tratar. O `POST /api/quotes/refresh` também deixou de
+usar a secret key e passou a rodar como o usuário logado — assim cada pessoa
+atualiza as cotações da própria carteira, e não as de todo mundo.
+
+### Cache e troca de usuário
+
+Um cache de carteira é dado de uma pessoa específica, então o logout **limpa**
+o cache (`queryClient.clear()` em `useSignOut`). Sem isso, o próximo login
+mostraria por um instante os cards de quem acabou de sair. O
+`contexts/AuthProvider.tsx` escuta `onAuthStateChange` e invalida as queries
+quando a sessão muda — inclusive quando a mudança aconteceu em outra aba.
 
 ## Cotações de mercado
 
@@ -161,8 +241,9 @@ Esta é a primeira parte do app que **não pode** rodar no browser:
 2. o Yahoo não manda header de CORS, então `fetch` do cliente falharia;
 3. o rate limit precisa ser compartilhado entre os usuários, não por aba aberta.
 
-O Route Handler também usa a **secret key** do Supabase (`lib/supabase-server.ts`),
-que ignora RLS — por isso ela nunca leva o prefixo `NEXT_PUBLIC_`.
+O Route Handler usa o client de servidor (`lib/supabase-server.ts`), que lê a
+sessão dos cookies e continua sujeito ao RLS: ele só enxerga — e só atualiza —
+os ativos de quem fez a chamada.
 
 ### Cache e rate limit
 
@@ -253,6 +334,7 @@ Tabela `public.investments` (`supabase/migrations/`):
 | coluna           | tipo            | observação                      |
 | ---------------- | --------------- | ------------------------------- |
 | `id`             | `uuid`          | PK, `gen_random_uuid()`         |
+| `user_id`        | `uuid`          | FK para `auth.users`; dono da linha |
 | `name`           | `text`          | nome do ativo                   |
 | `issuer`         | `text`          | emissor                         |
 | `type`           | `text`          | tipo do investimento            |
@@ -268,19 +350,23 @@ Tabela `public.investments` (`supabase/migrations/`):
 | `quote_source`   | `text`          | `yahoo` ou `brapi`              |
 | `quote_updated_at` | `timestamptz` | base do cache de frescor        |
 
-RLS está habilitado com políticas liberadas para `anon`/`authenticated`, já que
-a aplicação ainda não tem autenticação. Ao adicionar login, troque as políticas
-por regras baseadas em `auth.uid()`.
+RLS está habilitado com políticas por dono (`auth.uid() = user_id`) para o role
+`authenticated`; o `anon` não tem mais acesso à tabela. O seed cria os usuários
+de exemplo direto em `auth.users` — isso vale para o ambiente local de sala de
+aula; em produção as contas nascem pelo cadastro da aplicação.
 
 ### Camadas no front-end
 
 - `lib/supabase.ts` — cliente Supabase do browser.
 - `lib/investments.ts` — acesso aos dados e conversão `snake_case` ↔ `camelCase`.
 - `hooks/useInvestments.ts` — queries e mutations da carteira (TanStack Query).
+- `hooks/useAuth.ts` — sessão, login, cadastro e logout.
 - `contexts/QueryProvider.tsx` — `QueryClient` e devtools.
+- `contexts/AuthProvider.tsx` — liga os eventos de sessão ao cache.
 - `contexts/VisibilityContext.tsx` — estado de UI (mostrar/esconder valores).
 - `data/investments.ts` — apenas as opções fixas de tipo e categoria.
-- `lib/supabase-server.ts` — client de servidor com a secret key (nunca no cliente).
+- `lib/supabase-server.ts` — client de servidor que lê a sessão dos cookies.
+- `lib/supabase-proxy.ts` + `proxy.ts` — renovação da sessão e proteção de rotas.
 - `lib/quotes-refresh.ts` — chamada do browser para o Route Handler de cotações.
 - `lib/quotes/` — providers de cotação e a cadeia de fallback.
 - `app/api/quotes/refresh/route.ts` — Route Handler que atualiza as cotações.

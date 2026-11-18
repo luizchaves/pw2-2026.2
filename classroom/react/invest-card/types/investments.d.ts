@@ -23,6 +23,8 @@ export type NewInvestment = Omit<
 /** Formato das colunas da tabela `investments` no Supabase. */
 export type InvestmentRow = {
   id: string;
+  /** Dono da linha: comparado com auth.uid() nas policies de RLS. */
+  user_id: string;
   name: string;
   type: string;
   category: string;

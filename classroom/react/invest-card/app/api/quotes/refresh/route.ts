@@ -6,6 +6,9 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 // 1. o BRAPI_TOKEN não pode ir para o bundle do browser;
 // 2. o Yahoo não manda header de CORS, então fetch do cliente falharia;
 // 3. o rate limit é compartilhado por todos os usuários, não por aba aberta.
+//
+// O client vem dos cookies da requisição, então as queries abaixo rodam como o
+// usuário logado e o RLS cuida do resto: cada um só cota a própria carteira.
 
 const DEFAULT_STALE_MINUTES = 15;
 
@@ -37,11 +40,19 @@ export async function POST(request: Request) {
   let supabase;
 
   try {
-    supabase = createServerSupabaseClient();
+    supabase = await createServerSupabaseClient();
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : 'erro de configuração';
 
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 });
   }
 
   const { data, error } = await supabase

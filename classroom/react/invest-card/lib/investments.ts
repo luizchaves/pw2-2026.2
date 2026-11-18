@@ -25,8 +25,9 @@ function toInvestment(row: InvestmentRow): Investment {
   };
 }
 
-function toRow(investment: NewInvestment) {
+function toRow(investment: NewInvestment, userId: string) {
   return {
+    user_id: userId,
     name: investment.name,
     issuer: investment.issuer,
     type: investment.type,
@@ -40,6 +41,11 @@ function toRow(investment: NewInvestment) {
   };
 }
 
+/**
+ * Lê a carteira do usuário logado. Não há `.eq('user_id', ...)` aqui de
+ * propósito: quem filtra é o RLS, com o auth.uid() do token. Um select sem
+ * filtro no cliente já volta só com as linhas de quem pediu.
+ */
 export async function fetchInvestments(): Promise<Investment[]> {
   const { data, error } = await supabase
     .from(TABLE)
@@ -59,9 +65,19 @@ export async function fetchInvestments(): Promise<Investment[]> {
 export async function insertInvestment(
   investment: NewInvestment,
 ): Promise<Investment> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // A policy de insert exige auth.uid() = user_id, então o dono vai explícito
+  // na linha: sem ele o banco recusa a escrita.
+  if (!user) {
+    throw new Error('Faça login para adicionar um investimento.');
+  }
+
   const { data, error } = await supabase
     .from(TABLE)
-    .insert(toRow(investment))
+    .insert(toRow(investment, user.id))
     .select()
     .single();
 

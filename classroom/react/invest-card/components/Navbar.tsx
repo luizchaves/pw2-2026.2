@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import EyeToggle from '@/components/EyeToggle';
 import NavShell from '@/components/NavShell';
-import UserMenu from '@/components/UserMenu';
+import UserMenu from '@/features/auth/components/UserMenu';
 import {
   NavigationMenu,
   NavigationMenuItem,

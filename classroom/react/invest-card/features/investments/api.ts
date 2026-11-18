@@ -1,10 +1,10 @@
 import { supabase } from '@/lib/supabase';
-import { returnPercentage } from '@/lib/portfolio';
+import { returnPercentage } from '@/features/investments/portfolio';
 import type {
   Investment,
   InvestmentRow,
   NewInvestment,
-} from '@/types/investments';
+} from '@/features/investments/types';
 
 const TABLE = 'investments';
 

@@ -118,7 +118,7 @@ create policy "investments_select_own"
   using (auth.uid() = user_id);
 ```
 
-Repare que `lib/investments.ts` **não** tem `.eq('user_id', ...)`: um
+Repare que `features/investments/api.ts` **não** tem `.eq('user_id', ...)`: um
 `select('*')` já volta só com as linhas de quem pediu. O acesso anônimo foi
 revogado, então sem login a tabela nem responde:
 
@@ -167,7 +167,7 @@ atualiza as cotações da própria carteira, e não as de todo mundo.
 Um cache de carteira é dado de uma pessoa específica, então o logout **limpa**
 o cache (`queryClient.clear()` em `useSignOut`). Sem isso, o próximo login
 mostraria por um instante os cards de quem acabou de sair. O
-`contexts/AuthProvider.tsx` escuta `onAuthStateChange` e invalida as queries
+`features/auth/AuthProvider.tsx` escuta `onAuthStateChange` e invalida as queries
 quando a sessão muda — inclusive quando a mudança aconteceu em outra aba.
 
 ## Cotações de mercado
@@ -185,7 +185,8 @@ performance   = variação do dia devolvida pelo provider
 O formulário pergunta **valor investido** e, depois, o **valor atual** — este
 obrigatório só quando não há ticker, porque com ticker a primeira atualização
 de cotações o calcula (`quantity * last_quote`). Vazio, o ativo começa valendo
-o que custou. A performance sai desses dois valores, em `lib/investments.ts`:
+o que custou. A performance sai desses dois valores, em
+`features/investments/api.ts`:
 
 ```
 performance = (current_value - invested_value) / invested_value * 100
@@ -208,7 +209,7 @@ Tesouro Selic rende `100% Selic`, um CDB `110% CDI`, um Tesouro IPCA+
 *Rende 100% Selic* no lugar da linha de cotação.
 
 O campo é **texto livre** (com sugestões via `datalist`, em
-`data/investments.ts`), e não um select: o índice e a taxa mudam de papel para
+`features/investments/options.ts`), e não um select: o índice e a taxa mudam de papel para
 papel, e uma lista fechada envelheceria a cada produto novo.
 
 `indexer` e `ticker` são excludentes — o que tem preço de mercado não tem regra
@@ -240,15 +241,15 @@ variação saia correta em reais (ela passa a incluir o movimento do dólar, o q
 
 `POST /api/quotes/refresh` busca as cotações com **Yahoo Finance como primário
 e brapi.dev como fallback**. Os dois implementam a mesma interface
-(`lib/quotes/types.ts`), então trocar ou acrescentar fonte não encosta no resto
+(`quotes/types.ts`), então trocar ou acrescentar fonte não encosta no resto
 do app:
 
-| arquivo                 | papel                                            |
-| ----------------------- | ------------------------------------------------ |
-| `lib/quotes/types.ts`   | `Quote`, `QuoteProvider`, `QuoteUnavailableError` |
-| `lib/quotes/yahoo.ts`   | endpoint não documentado do Yahoo (`PETR4.SA`)    |
-| `lib/quotes/brapi.ts`   | brapi.dev (`PETR4`, token opcional)               |
-| `lib/quotes/index.ts`   | cadeia de fallback e paralelismo                  |
+| arquivo em `features/investments/quotes/` | papel                       |
+| ----------------------------------------- | --------------------------- |
+| `types.ts`  | `Quote`, `QuoteProvider`, `QuoteUnavailableError`             |
+| `yahoo.ts`  | endpoint não documentado do Yahoo (`PETR4.SA`)                |
+| `brapi.ts`  | brapi.dev (`PETR4`, token opcional)                           |
+| `index.ts`  | cadeia de fallback e paralelismo                              |
 
 O fallback é **por ticker**, não tudo-ou-nada: se o Yahoo responde 4 de 5, a
 brapi é chamada só para o que faltou. Cada tentativa fica registrada na resposta,
@@ -316,7 +317,7 @@ aba (o `POST /api/quotes/refresh` grava direto no banco) e precisam de
 [TanStack Query](https://tanstack.com/query), e não de `useState` + `useEffect`
 num Context.
 
-Todo o acesso passa por `hooks/useInvestments.ts`:
+Todo o acesso passa por `features/investments/hooks/useInvestments.ts`:
 
 | hook                   | o que é            | o que faz                                   |
 | ---------------------- | ------------------ | ------------------------------------------- |
@@ -419,27 +420,51 @@ precisa mais perguntar "tem sessão?" para decidir o que mostrar: o layout de
 antes, no `proxy.ts`. A casca comum das duas barras (margens, `max-w-6xl`,
 marca) fica em `components/NavShell.tsx`.
 
-### Camadas no front-end
+### Organização do código
 
-- `lib/supabase.ts` — cliente Supabase do browser.
-- `lib/investments.ts` — acesso aos dados e conversão `snake_case` ↔ `camelCase`.
+O código de domínio mora em `features/`, não espalhado por pastas de camada
+técnica. A regra é simples: **se o arquivo fala de investimento ou de login,
+ele vive com os seus**; o que serve a todo mundo (clientes Supabase,
+formatação, primitivos de UI, providers) fica fora.
+
+```
+features/
+  investments/
+    components/   InvestmentCard, InvestmentForm, RefreshQuotesButton
+    hooks/        useInvestments (query + mutations)
+    api.ts        acesso ao Supabase e conversão snake_case ↔ camelCase
+    portfolio.ts  somas e proporções do dashboard (cálculo puro)
+    options.ts    tipos e categorias fixos do formulário
+    types.ts      Investment, NewInvestment, InvestmentRow
+    quotes/       providers de cotação e a cadeia de fallback (servidor)
+    quotes-refresh.ts  a chamada do browser ao Route Handler
+  auth/
+    components/   AuthForm, UserMenu
+    hooks/        useAuth (sessão, login, cadastro, logout)
+    session.ts    a sessão lida no servidor, para as telas públicas
+    AuthProvider.tsx  liga os eventos de sessão ao cache
+app/              rotas, em (public) e (private)
+components/       NavShell, Navbar, PublicNavbar, EyeToggle e ui/
+contexts/         QueryProvider, VisibilityContext, AppProviders
+lib/              supabase.ts, supabase-server.ts, supabase-proxy.ts,
+                  format.ts, utils.ts
+```
+
+Antes disso, acrescentar uma coluna como o indexador encostava em quatro
+pastas (`components/`, `hooks/`, `lib/`, `types/`) para uma mudança só. É esse
+o problema que a pasta por feature resolve: a pasta por camada cresce bem no
+número de features e mal na hora de mexer em uma delas.
+
+Fora de `features/`:
+
 - `app/(public)/page.tsx` — a landing.
 - `app/(private)/investments/page.tsx` — a carteira, card a card.
-- `app/(private)/dashboard/page.tsx` — a mesma carteira consolidada: totais,
-  alocação e variação do dia.
-- `lib/session.ts` — a sessão lida no servidor, para as telas públicas.
-- `lib/portfolio.ts` — as somas e proporções do dashboard. Cálculo puro (entra
-  uma lista, sai um objeto), fora do componente e fácil de testar.
-- `hooks/useInvestments.ts` — queries e mutations da carteira (TanStack Query).
-- `hooks/useAuth.ts` — sessão, login, cadastro e logout.
-- `contexts/QueryProvider.tsx` — `QueryClient` e devtools.
-- `contexts/AuthProvider.tsx` — liga os eventos de sessão ao cache.
-- `contexts/VisibilityContext.tsx` — estado de UI (mostrar/esconder valores).
-- `data/investments.ts` — apenas as opções fixas de tipo e categoria.
-- `lib/supabase-server.ts` — client de servidor que lê a sessão dos cookies.
-- `components/NavShell.tsx` — a casca das duas barras.
-- `lib/supabase-proxy.ts` + `proxy.ts` — renovação da sessão e proteção de rotas.
-- `lib/quotes-refresh.ts` — chamada do browser para o Route Handler de cotações.
-- `lib/quotes/` — providers de cotação e a cadeia de fallback.
+- `app/(private)/dashboard/page.tsx` — a mesma carteira consolidada.
 - `app/api/quotes/refresh/route.ts` — Route Handler que atualiza as cotações.
+- `lib/supabase.ts` — cliente Supabase do browser.
+- `lib/supabase-server.ts` — client de servidor que lê a sessão dos cookies.
+- `lib/supabase-proxy.ts` + `proxy.ts` — renovação da sessão e proteção de rotas.
+- `contexts/QueryProvider.tsx` — `QueryClient` e devtools.
+- `contexts/VisibilityContext.tsx` — estado de UI (mostrar/esconder valores).
+- `components/NavShell.tsx` — a casca das duas barras.
 - `scripts/supabase-env.mjs` — gera o `.env.local` a partir de `supabase status`.

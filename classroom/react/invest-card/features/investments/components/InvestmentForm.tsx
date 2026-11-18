@@ -2,13 +2,13 @@
 
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { Pencil, Plus } from 'lucide-react';
-import type { Investment, InvestmentFormData } from '@/types/investments';
-import { useAddInvestment, useUpdateInvestment } from '@/hooks/useInvestments';
+import type { Investment, InvestmentFormData } from '@/features/investments/types';
+import { useAddInvestment, useUpdateInvestment } from '@/features/investments/hooks/useInvestments';
 import {
   indexerSuggestions,
   investmentCategories,
   investmentTypes,
-} from '@/data/investments';
+} from '@/features/investments/options';
 import {
   formatLocaleNumber,
   formatQuantity,

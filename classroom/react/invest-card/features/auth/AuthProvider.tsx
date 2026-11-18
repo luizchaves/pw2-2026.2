@@ -3,8 +3,8 @@
 import { useEffect, type PropsWithChildren } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { authKeys } from '@/hooks/useAuth';
-import { investmentKeys } from '@/hooks/useInvestments';
+import { authKeys } from '@/features/auth/hooks/useAuth';
+import { investmentKeys } from '@/features/investments/hooks/useInvestments';
 
 /**
  * Liga os eventos de sessão do Supabase ao cache do TanStack Query. Sem isto,

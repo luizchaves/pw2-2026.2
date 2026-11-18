@@ -1,9 +1,9 @@
 'use client';
 
-import InvestmentCard from '@/components/InvestmentCard';
-import InvestmentForm from '@/components/InvestmentForm';
-import RefreshQuotesButton from '@/components/RefreshQuotesButton';
-import { useInvestments } from '@/hooks/useInvestments';
+import InvestmentCard from '@/features/investments/components/InvestmentCard';
+import InvestmentForm from '@/features/investments/components/InvestmentForm';
+import RefreshQuotesButton from '@/features/investments/components/RefreshQuotesButton';
+import { useInvestments } from '@/features/investments/hooks/useInvestments';
 
 export default function Home() {
   const {

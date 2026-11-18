@@ -11,16 +11,16 @@ import {
   Wallet,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useInvestments } from '@/hooks/useInvestments';
+import { useInvestments } from '@/features/investments/hooks/useInvestments';
 import { useVisibility } from '@/contexts/VisibilityContext';
 import {
   allocationByCategory,
   rankByPerformance,
   summarize,
-} from '@/lib/portfolio';
+} from '@/features/investments/portfolio';
 import { formatCurrency, formatPercentage } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import type { Investment } from '@/types/investments';
+import type { Investment } from '@/features/investments/types';
 
 const HIDDEN_VALUE = 'R$ ****';
 

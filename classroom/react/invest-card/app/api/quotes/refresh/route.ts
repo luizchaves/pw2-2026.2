@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchQuotes, type QuoteAttempt } from '@/lib/quotes';
+import { fetchQuotes, type QuoteAttempt } from '@/features/investments/quotes';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 // Isto roda no servidor porque:

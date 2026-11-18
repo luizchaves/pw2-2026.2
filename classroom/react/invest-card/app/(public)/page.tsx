@@ -9,7 +9,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getSessionUser } from '@/lib/session';
+import { getSessionUser } from '@/features/auth/session';
 
 const features = [
   {

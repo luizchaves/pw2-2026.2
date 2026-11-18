@@ -2,7 +2,7 @@
 
 import type { PropsWithChildren } from 'react';
 import QueryProvider from '@/contexts/QueryProvider';
-import AuthProvider from '@/contexts/AuthProvider';
+import AuthProvider from '@/features/auth/AuthProvider';
 import { VisibilityProvider } from '@/contexts/VisibilityContext';
 
 export default function AppProviders({ children }: PropsWithChildren) {

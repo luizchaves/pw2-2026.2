@@ -2,7 +2,7 @@
 
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useRefreshQuotes } from '@/hooks/useInvestments';
+import { useRefreshQuotes } from '@/features/investments/hooks/useInvestments';
 
 export default function RefreshQuotesButton() {
   const { mutate, isPending, data, error } = useRefreshQuotes();

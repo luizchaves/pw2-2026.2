@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useSignOut, useUser } from '@/hooks/useAuth';
+import { useSignOut, useUser } from '@/features/auth/hooks/useAuth';
 
 /**
  * Iniciais a partir do e-mail — é o único nome que temos, já que o cadastro

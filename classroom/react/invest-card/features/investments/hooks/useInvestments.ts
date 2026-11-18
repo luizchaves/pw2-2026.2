@@ -12,9 +12,9 @@ import {
   fetchInvestments,
   insertInvestment,
   updateInvestment,
-} from '@/lib/investments';
-import { requestQuotesRefresh, type RefreshSummary } from '@/lib/quotes-refresh';
-import type { Investment, NewInvestment } from '@/types/investments';
+} from '@/features/investments/api';
+import { requestQuotesRefresh, type RefreshSummary } from '@/features/investments/quotes-refresh';
+import type { Investment, NewInvestment } from '@/features/investments/types';
 
 // Uma chave só para a carteira. Tudo que muda a lista (incluir, remover,
 // atualizar cotações) invalida esta chave, e quem usa useInvestments refaz o

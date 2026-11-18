@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import AuthForm from '@/components/AuthForm';
+import AuthForm from '@/features/auth/components/AuthForm';
 
 export default function LoginPage() {
   // AuthForm lê o `?next=` com useSearchParams, que precisa de um boundary.

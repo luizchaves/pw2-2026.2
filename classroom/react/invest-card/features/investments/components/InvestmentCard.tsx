@@ -1,10 +1,10 @@
 'use client';
 
 import { formatCurrency, formatPercentage, formatQuantity } from '@/lib/format';
-import { useRemoveInvestment } from '@/hooks/useInvestments';
+import { useRemoveInvestment } from '@/features/investments/hooks/useInvestments';
 import { useVisibility } from '@/contexts/VisibilityContext';
 import { cn } from '@/lib/utils';
-import type { Investment } from '@/types/investments';
+import type { Investment } from '@/features/investments/types';
 import {
   Minus,
   TrendingDown,
@@ -26,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-import InvestmentForm from '@/components/InvestmentForm';
+import InvestmentForm from '@/features/investments/components/InvestmentForm';
 
 type InvestmentCardProps = {
   investment: Investment;

@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import PublicNavbar from '@/components/PublicNavbar';
-import { getSessionUser } from '@/lib/session';
+import { getSessionUser } from '@/features/auth/session';
 
 async function SessionAwareNavbar() {
   const user = await getSessionUser();

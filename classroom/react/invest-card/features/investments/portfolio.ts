@@ -1,4 +1,4 @@
-import type { Investment } from '@/types/investments';
+import type { Investment } from '@/features/investments/types';
 
 export type PortfolioSummary = {
   /** Soma do valor atual de todos os ativos. */

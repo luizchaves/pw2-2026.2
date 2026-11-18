@@ -37,6 +37,7 @@ const read = (key) => status.match(new RegExp(`^${key}="(.*)"$`, 'm'))?.[1];
 
 const apiUrl = read('API_URL');
 const publishableKey = read('PUBLISHABLE_KEY') ?? read('ANON_KEY');
+const secretKey = read('SECRET_KEY') ?? read('SERVICE_ROLE_KEY');
 
 if (!apiUrl || !publishableKey) {
   console.error(
@@ -52,6 +53,13 @@ writeFileSync(
     '# Para apontar para a nuvem, edite este arquivo (veja o README).',
     `NEXT_PUBLIC_SUPABASE_URL=${apiUrl}`,
     `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${publishableKey}`,
+    '',
+    '# Só no servidor (Route Handlers / Server Actions). Ignora RLS.',
+    `SUPABASE_SECRET_KEY=${secretKey ?? ''}`,
+    '',
+    '# Fallback de cotação. Sem token a brapi só aceita ticker único,',
+    '# com rate limit anônimo baixo. Pegue um em https://brapi.dev',
+    'BRAPI_TOKEN=',
     '',
   ].join('\n'),
 );

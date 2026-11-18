@@ -1,6 +1,6 @@
 'use client';
 
-import { formatCurrency, formatPercentage } from '@/lib/format';
+import { formatCurrency, formatPercentage, formatQuantity } from '@/lib/format';
 import { useInvestments } from '@/contexts/InvestmentsContext';
 import { useVisibility } from '@/contexts/VisibilityContext';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,13 @@ type InvestmentCardProps = {
   investment: Investment;
 };
 
+function formatQuoteTime(isoDate: string): string {
+  return new Date(isoDate).toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export default function InvestmentCard({
   investment: {
     id,
@@ -38,6 +45,11 @@ export default function InvestmentCard({
     performance,
     currentValue,
     investedValue,
+    ticker,
+    quantity,
+    lastQuote,
+    quoteSource,
+    quoteUpdatedAt,
   },
 }: InvestmentCardProps) {
   const { isOpenEye } = useVisibility();
@@ -103,12 +115,26 @@ export default function InvestmentCard({
           <Wallet className="w-4 h-4 text-slate-400" />
           {isOpenEye ? formatCurrency(currentValue) : 'R$ ****'}
         </p>
+        {lastQuote !== null && (
+          <p className="text-xs text-slate-400">
+            {isOpenEye && quantity !== null
+              ? `${formatQuantity(quantity)} × ${formatCurrency(lastQuote)}`
+              : `${formatCurrency(lastQuote)} / un.`}
+          </p>
+        )}
         <p className="text-sm text-slate-400">
           Investido: {isOpenEye ? formatCurrency(investedValue) : 'R$ ****'}
         </p>
       </div>
       <div className="flex items-center justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
-        <span></span>
+        {/* Mostrar o provider deixa o fallback visível na tela. */}
+        <span className="text-xs text-slate-400">
+          {ticker && quoteSource && quoteUpdatedAt
+            ? `${ticker} · ${quoteSource} · ${formatQuoteTime(quoteUpdatedAt)}`
+            : ticker
+              ? `${ticker} · valor inicial`
+              : 'valor informado'}
+        </span>
         <span>{type}</span>
       </div>
     </article>

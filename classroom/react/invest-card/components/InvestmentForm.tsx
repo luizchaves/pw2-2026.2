@@ -35,6 +35,8 @@ const initialFormData: InvestmentFormData = {
   performance: '',
   currentValue: '',
   investedValue: '',
+  ticker: '',
+  quantity: '',
 };
 
 const textFields = [
@@ -54,6 +56,23 @@ const selectFields = [
     label: 'Categoria',
     placeholder: 'Selecione a categoria',
     options: investmentCategories,
+  },
+] as const;
+
+// Opcionais: preenchidos só para o que é negociado em bolsa. Com ticker, a
+// cotação passa a vir do /api/quotes/refresh e sobrescreve os valores abaixo.
+const quoteFields = [
+  {
+    name: 'ticker',
+    label: 'Ticker (opcional)',
+    placeholder: 'PETR4',
+    hint: 'Deixe vazio para renda fixa e fundos',
+  },
+  {
+    name: 'quantity',
+    label: 'Quantidade',
+    placeholder: '75',
+    hint: 'Obrigatória quando há ticker',
   },
 ] as const;
 
@@ -113,6 +132,16 @@ export default function InvestmentForm() {
     setIsSaving(true);
     setFormError(null);
 
+    const ticker = formData.ticker.trim().toUpperCase();
+    const quantity = formData.quantity.trim();
+
+    if (ticker && !quantity) {
+      setFormError('Informe a quantidade para poder cotar o ticker.');
+      setIsSaving(false);
+
+      return;
+    }
+
     try {
       await addInvestment({
         name: formData.name,
@@ -122,6 +151,8 @@ export default function InvestmentForm() {
         performance: parseLocaleNumber(formData.performance),
         currentValue: parseLocaleNumber(formData.currentValue),
         investedValue: parseLocaleNumber(formData.investedValue),
+        ticker: ticker || null,
+        quantity: ticker ? parseLocaleNumber(quantity) : null,
       });
 
       handleOpenChange(false);
@@ -213,6 +244,22 @@ export default function InvestmentForm() {
                     required
                   />
                 </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-4">
+            {quoteFields.map(({ name, label, placeholder, hint }) => (
+              <div key={name} className="grid gap-1.5">
+                <Label htmlFor={name}>{label}</Label>
+                <Input
+                  id={name}
+                  name={name}
+                  value={formData[name]}
+                  onChange={handleChange}
+                  placeholder={placeholder}
+                />
+                <span className="text-xs text-slate-400">{hint}</span>
               </div>
             ))}
           </div>

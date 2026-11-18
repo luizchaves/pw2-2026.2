@@ -89,6 +89,105 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 Os valores estão em **Project Settings > API Keys** no dashboard. Use apenas a
 chave publishable (anon) no front-end; a secret key nunca vai para o cliente.
 
+## Cotações de mercado
+
+Os ativos negociados em bolsa têm `ticker` e `quantity`. Para eles, o valor
+atual deixa de ser digitado e passa a ser derivado:
+
+```
+current_value = quantity * last_quote
+performance   = variação do dia devolvida pelo provider
+```
+
+Renda fixa e fundos ficam com `ticker` nulo e seguem com os valores informados
+à mão — Tesouro, CDB e fundos não têm ticker de bolsa e precisariam de outras
+fontes (Tesouro Direto, CDI, CVM).
+
+O `last_quote` já vem preenchido no seed (derivado de
+`current_value / quantity`), então o **preço unitário aparece no card desde o
+primeiro load**, antes de qualquer refresh. Como `quote_source` fica nulo nesse
+estado, o card mostra `valor inicial` em vez do nome de um provider.
+
+### Cripto: o par sintético BTC-BRL
+
+O Yahoo **não tem `BTC-BRL`** (responde 404) — só `BTC-USD`. Em vez de exibir o
+Bitcoin em dólar, o provider compõe o par: busca `BTC-USD` e o câmbio
+`USDBRL=X` e multiplica, inclusive os fechamentos anteriores, para que a
+variação saia correta em reais (ela passa a incluir o movimento do dólar, o que
+é proposital). Na brapi o mesmo ticker vai para o endpoint de cripto
+(`/api/v2/crypto?coin=BTC&currency=BRL`), que exige token.
+
+### Cadeia de providers
+
+`POST /api/quotes/refresh` busca as cotações com **Yahoo Finance como primário
+e brapi.dev como fallback**. Os dois implementam a mesma interface
+(`lib/quotes/types.ts`), então trocar ou acrescentar fonte não encosta no resto
+do app:
+
+| arquivo                 | papel                                            |
+| ----------------------- | ------------------------------------------------ |
+| `lib/quotes/types.ts`   | `Quote`, `QuoteProvider`, `QuoteUnavailableError` |
+| `lib/quotes/yahoo.ts`   | endpoint não documentado do Yahoo (`PETR4.SA`)    |
+| `lib/quotes/brapi.ts`   | brapi.dev (`PETR4`, token opcional)               |
+| `lib/quotes/index.ts`   | cadeia de fallback e paralelismo                  |
+
+O fallback é **por ticker**, não tudo-ou-nada: se o Yahoo responde 4 de 5, a
+brapi é chamada só para o que faltou. Cada tentativa fica registrada na resposta,
+então dá para ver qual provider atendeu cada ativo:
+
+```json
+{
+  "refreshed": [
+    {
+      "ticker": "PETR4",
+      "price": 43.56,
+      "source": "brapi",
+      "attempts": [
+        { "provider": "yahoo", "ok": false, "reason": "HTTP 404" },
+        { "provider": "brapi", "ok": true }
+      ]
+    }
+  ],
+  "skipped": [],
+  "failed": []
+}
+```
+
+### Por que isso roda no servidor
+
+Esta é a primeira parte do app que **não pode** rodar no browser:
+
+1. o `BRAPI_TOKEN` não pode ir para o bundle;
+2. o Yahoo não manda header de CORS, então `fetch` do cliente falharia;
+3. o rate limit precisa ser compartilhado entre os usuários, não por aba aberta.
+
+O Route Handler também usa a **secret key** do Supabase (`lib/supabase-server.ts`),
+que ignora RLS — por isso ela nunca leva o prefixo `NEXT_PUBLIC_`.
+
+### Cache e rate limit
+
+Cotação com menos de `QUOTE_STALE_MINUTES` (padrão 15) não é buscada de novo.
+Use `POST /api/quotes/refresh?force=1` para ignorar o cache.
+
+> **O fallback só é real com `BRAPI_TOKEN`.** Sem token a brapi aceita apenas
+> um ticker por requisição e devolve 401/429 rapidamente — testado com o Yahoo
+> fora, só 1 de 5 ativos foi cotado. Pegue um token gratuito em
+> [brapi.dev](https://brapi.dev) antes de depender do fallback.
+
+### Testando o fallback
+
+Aponte o Yahoo para uma URL quebrada no `.env.local` e force a atualização:
+
+```bash
+echo 'QUOTE_YAHOO_BASE_URL=https://query1.finance.yahoo.com/v8/finance/quebrado' >> .env.local
+```
+
+```bash
+curl -X POST 'http://localhost:3000/api/quotes/refresh?force=1'
+```
+
+Também dá para inverter a ordem com `QUOTE_PROVIDER_ORDER=brapi,yahoo`.
+
 ## Estrutura dos dados
 
 Tabela `public.investments` (`supabase/migrations/`):
@@ -104,6 +203,12 @@ Tabela `public.investments` (`supabase/migrations/`):
 | `current_value`  | `numeric(14,2)` | valor atual                     |
 | `invested_value` | `numeric(14,2)` | valor investido                 |
 | `created_at`     | `timestamptz`   | usado para ordenar a listagem   |
+| `ticker`         | `text`          | nulo para renda fixa e fundos   |
+| `quantity`       | `numeric(18,8)` | obrigatória quando há ticker    |
+| `last_quote`     | `numeric(14,4)` | preço unitário; vem no seed     |
+| `quote_currency` | `text`          | moeda da cotação                |
+| `quote_source`   | `text`          | `yahoo` ou `brapi`              |
+| `quote_updated_at` | `timestamptz` | base do cache de frescor        |
 
 RLS está habilitado com políticas liberadas para `anon`/`authenticated`, já que
 a aplicação ainda não tem autenticação. Ao adicionar login, troque as políticas
@@ -116,4 +221,7 @@ por regras baseadas em `auth.uid()`.
 - `contexts/InvestmentsContext.tsx` — estado da carteira (`isLoading`, `error`,
   `addInvestment`, `removeInvestment`).
 - `data/investments.ts` — apenas as opções fixas de tipo e categoria.
+- `lib/supabase-server.ts` — client de servidor com a secret key (nunca no cliente).
+- `lib/quotes/` — providers de cotação e a cadeia de fallback.
+- `app/api/quotes/refresh/route.ts` — Route Handler que atualiza as cotações.
 - `scripts/supabase-env.mjs` — gera o `.env.local` a partir de `supabase status`.

@@ -2,6 +2,7 @@
 
 import InvestmentCard from '@/components/InvestmentCard';
 import InvestmentForm from '@/components/InvestmentForm';
+import RefreshQuotesButton from '@/components/RefreshQuotesButton';
 import { useInvestments } from '@/contexts/InvestmentsContext';
 
 export default function Home() {
@@ -18,7 +19,10 @@ export default function Home() {
             Acompanhe o desempenho da sua carteira
           </p>
         </div>
-        <InvestmentForm />
+        <div className="flex items-start gap-3">
+          <RefreshQuotesButton />
+          <InvestmentForm />
+        </div>
       </header>
 
       {error && (

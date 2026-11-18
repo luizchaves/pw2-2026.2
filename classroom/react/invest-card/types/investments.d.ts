@@ -7,9 +7,18 @@ export type Investment = {
   currentValue: number;
   investedValue: number;
   issuer: string;
+  /** Símbolo negociado em bolsa. Nulo para renda fixa e fundos. */
+  ticker: string | null;
+  quantity: number | null;
+  lastQuote: number | null;
+  quoteSource: string | null;
+  quoteUpdatedAt: string | null;
 };
 
-export type NewInvestment = Omit<Investment, 'id'>;
+export type NewInvestment = Omit<
+  Investment,
+  'id' | 'lastQuote' | 'quoteSource' | 'quoteUpdatedAt'
+>;
 
 /** Formato das colunas da tabela `investments` no Supabase. */
 export type InvestmentRow = {
@@ -22,6 +31,11 @@ export type InvestmentRow = {
   invested_value: number;
   issuer: string;
   created_at: string;
+  ticker: string | null;
+  quantity: number | null;
+  last_quote: number | null;
+  quote_source: string | null;
+  quote_updated_at: string | null;
 };
 
 export type InvestmentFormData = {
@@ -32,4 +46,6 @@ export type InvestmentFormData = {
   performance: string;
   currentValue: string;
   investedValue: string;
+  ticker: string;
+  quantity: string;
 };

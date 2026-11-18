@@ -5,6 +5,11 @@ export function formatCurrency(value: number): string {
   });
 }
 
+/** Quantidade: inteira para ações, fracionária para cripto. */
+export function formatQuantity(value: number): string {
+  return value.toLocaleString('pt-BR', { maximumFractionDigits: 8 });
+}
+
 export function formatPercentage(value: number): string {
   const sign = value >= 0 ? '+' : '';
   return sign + value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';

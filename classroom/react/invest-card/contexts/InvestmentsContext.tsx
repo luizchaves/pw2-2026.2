@@ -20,6 +20,8 @@ type InvestmentsContextValue = {
   error: string | null;
   addInvestment: (investment: NewInvestment) => Promise<void>;
   removeInvestment: (id: string) => Promise<void>;
+  /** Relê a carteira do banco (usado depois de atualizar as cotações). */
+  reload: () => Promise<void>;
 };
 
 const InvestmentsContext = createContext<InvestmentsContextValue | null>(null);
@@ -58,6 +60,15 @@ export function InvestmentsProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
+  const reload = async () => {
+    try {
+      setInvestments(await fetchInvestments());
+      setError(null);
+    } catch (cause) {
+      setError(getErrorMessage(cause));
+    }
+  };
+
   const addInvestment = async (investment: NewInvestment) => {
     try {
       const created = await insertInvestment(investment);
@@ -85,7 +96,14 @@ export function InvestmentsProvider({ children }: PropsWithChildren) {
 
   return (
     <InvestmentsContext
-      value={{ investments, isLoading, error, addInvestment, removeInvestment }}
+      value={{
+        investments,
+        isLoading,
+        error,
+        addInvestment,
+        removeInvestment,
+        reload,
+      }}
     >
       {children}
     </InvestmentsContext>

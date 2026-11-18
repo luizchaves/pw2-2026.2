@@ -17,6 +17,11 @@ function toInvestment(row: InvestmentRow): Investment {
     performance: Number(row.performance),
     currentValue: Number(row.current_value),
     investedValue: Number(row.invested_value),
+    ticker: row.ticker,
+    quantity: row.quantity === null ? null : Number(row.quantity),
+    lastQuote: row.last_quote === null ? null : Number(row.last_quote),
+    quoteSource: row.quote_source,
+    quoteUpdatedAt: row.quote_updated_at,
   };
 }
 
@@ -29,6 +34,9 @@ function toRow(investment: NewInvestment) {
     performance: investment.performance,
     current_value: investment.currentValue,
     invested_value: investment.investedValue,
+    // Sem ticker o ativo nunca é cotado: fica com os valores digitados.
+    ticker: investment.ticker,
+    quantity: investment.quantity,
   };
 }
 
@@ -36,7 +44,10 @@ export async function fetchInvestments(): Promise<Investment[]> {
   const { data, error } = await supabase
     .from(TABLE)
     .select('*')
-    .order('created_at', { ascending: true });
+    // O seed insere tudo numa transação só, então os created_at empatam e a
+    // ordem vira arbitrária. O name desempata e deixa a listagem estável.
+    .order('created_at', { ascending: true })
+    .order('name', { ascending: true });
 
   if (error) {
     throw new Error(`Não foi possível carregar os investimentos: ${error.message}`);

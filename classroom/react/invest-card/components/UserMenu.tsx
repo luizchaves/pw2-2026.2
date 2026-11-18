@@ -42,7 +42,7 @@ export default function UserMenu() {
   const handleSignOut = () => {
     signOut(undefined, {
       onSuccess: () => {
-        router.replace('/login');
+        router.replace('/');
         // O proxy precisa reavaliar a sessão já sem o cookie.
         router.refresh();
       },

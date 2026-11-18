@@ -400,13 +400,34 @@ RLS está habilitado com políticas por dono (`auth.uid() = user_id`) para o rol
 de exemplo direto em `auth.users` — isso vale para o ambiente local de sala de
 aula; em produção as contas nascem pelo cadastro da aplicação.
 
+### Rotas
+
+Dois grupos, que organizam o `app/` sem aparecer na URL:
+
+| grupo      | rotas                           | layout                            |
+| ---------- | ------------------------------- | --------------------------------- |
+| `(public)` | `/`, `/login`, `/signup`        | barra com as portas de entrada    |
+| `(private)`| `/dashboard`, `/investments`    | barra de quem já entrou           |
+
+`/` é a landing: pública, prerenderizada, com os botões de ação chegando em
+streaming porque dependem da sessão. A carteira mudou de `/` para
+`/investments`, e `/dashboard` é a primeira tela de quem entra.
+
+Cada grupo tem o seu `layout.tsx` com a casca da área, então nenhuma barra
+precisa mais perguntar "tem sessão?" para decidir o que mostrar: o layout de
+`(private)` só é montado em rota protegida, e quem chega sem sessão é parado
+antes, no `proxy.ts`. A casca comum das duas barras (margens, `max-w-6xl`,
+marca) fica em `components/NavShell.tsx`.
+
 ### Camadas no front-end
 
 - `lib/supabase.ts` — cliente Supabase do browser.
 - `lib/investments.ts` — acesso aos dados e conversão `snake_case` ↔ `camelCase`.
-- `app/page.tsx` — a carteira, card a card.
-- `app/dashboard/page.tsx` — a mesma carteira consolidada: totais, alocação e
-  variação do dia.
+- `app/(public)/page.tsx` — a landing.
+- `app/(private)/investments/page.tsx` — a carteira, card a card.
+- `app/(private)/dashboard/page.tsx` — a mesma carteira consolidada: totais,
+  alocação e variação do dia.
+- `lib/session.ts` — a sessão lida no servidor, para as telas públicas.
 - `lib/portfolio.ts` — as somas e proporções do dashboard. Cálculo puro (entra
   uma lista, sai um objeto), fora do componente e fácil de testar.
 - `hooks/useInvestments.ts` — queries e mutations da carteira (TanStack Query).
@@ -416,6 +437,7 @@ aula; em produção as contas nascem pelo cadastro da aplicação.
 - `contexts/VisibilityContext.tsx` — estado de UI (mostrar/esconder valores).
 - `data/investments.ts` — apenas as opções fixas de tipo e categoria.
 - `lib/supabase-server.ts` — client de servidor que lê a sessão dos cookies.
+- `components/NavShell.tsx` — a casca das duas barras.
 - `lib/supabase-proxy.ts` + `proxy.ts` — renovação da sessão e proteção de rotas.
 - `lib/quotes-refresh.ts` — chamada do browser para o Route Handler de cotações.
 - `lib/quotes/` — providers de cotação e a cadeia de fallback.

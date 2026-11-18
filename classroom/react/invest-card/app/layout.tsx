@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import Navbar from '@/components/Navbar';
 import AppProviders from '@/contexts/AppProviders';
 import './globals.css';
 
@@ -25,11 +24,10 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      {/* A casca de cada área (navbar e margens) vem do layout do seu grupo:
+          `(admin)` para quem entrou, `(public)` para quem ainda não. */}
       <body className="bg-slate-100 min-h-screen">
-        <AppProviders>
-          <Navbar />
-          <div className="p-6 md:p-10">{children}</div>
-        </AppProviders>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

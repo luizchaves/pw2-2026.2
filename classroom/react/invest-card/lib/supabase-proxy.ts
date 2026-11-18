@@ -1,8 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-/** Rotas que uma pessoa deslogada precisa abrir. */
-const PUBLIC_ROUTES = ['/login', '/signup'];
+/** Rotas que abrem sem sessão. A landing é uma delas. */
+const PUBLIC_ROUTES = ['/', '/login', '/signup'];
+
+/** Rotas que não fazem sentido para quem já entrou. */
+const AUTH_ROUTES = ['/login', '/signup'];
 
 /** Primeira tela de quem já está logado. */
 const HOME_ROUTE = '/dashboard';
@@ -65,7 +68,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && isPublicRoute) {
+  // A landing fica de fora: ela se adapta à sessão em vez de sumir.
+  if (user && AUTH_ROUTES.includes(pathname)) {
     const redirectUrl = request.nextUrl.clone();
 
     redirectUrl.pathname = HOME_ROUTE;

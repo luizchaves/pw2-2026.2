@@ -140,7 +140,10 @@ export default function Dashboard() {
       ) : count === 0 ? (
         <p className="text-slate-500">
           Nenhum investimento na carteira ainda.{' '}
-          <Link href="/" className="font-medium text-emerald-700 hover:underline">
+          <Link
+            href="/investments"
+            className="font-medium text-emerald-700 hover:underline"
+          >
             Adicione o primeiro
           </Link>{' '}
           para ver os números aqui.

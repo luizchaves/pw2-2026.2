@@ -3,7 +3,7 @@
 
 export const investmentTypes: string[] = [
   'Tesouro Direto',
-  'Certificado de Depósito Bancário',
+  'CDB',
   'Ação Ordinária',
   'Ação Preferencial',
   'BDR',

@@ -44,7 +44,7 @@ export default function InvestmentCard({
   const { removeInvestment } = useInvestments();
 
   const handleRemoveClick = () => {
-    removeInvestment(id);
+    void removeInvestment(id);
   };
 
   return (

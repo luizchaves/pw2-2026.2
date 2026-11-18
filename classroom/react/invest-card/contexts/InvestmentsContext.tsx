@@ -1,33 +1,92 @@
 'use client';
 
-import { createContext, use, useState, type PropsWithChildren } from 'react';
-import { investments as initialInvestments } from '@/data/investments';
-import type { Investment } from '@/types/investments';
+import {
+  createContext,
+  use,
+  useEffect,
+  useState,
+  type PropsWithChildren,
+} from 'react';
+import {
+  deleteInvestment,
+  fetchInvestments,
+  insertInvestment,
+} from '@/lib/investments';
+import type { Investment, NewInvestment } from '@/types/investments';
 
 type InvestmentsContextValue = {
   investments: Investment[];
-  addInvestment: (investment: Investment) => void;
-  removeInvestment: (id: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  addInvestment: (investment: NewInvestment) => Promise<void>;
+  removeInvestment: (id: string) => Promise<void>;
 };
 
 const InvestmentsContext = createContext<InvestmentsContextValue | null>(null);
 
-export function InvestmentsProvider({ children }: PropsWithChildren) {
-  const [investments, setInvestments] =
-    useState<Investment[]>(initialInvestments);
+function getErrorMessage(cause: unknown): string {
+  return cause instanceof Error ? cause.message : 'Erro inesperado.';
+}
 
-  const addInvestment = (investment: Investment) => {
-    setInvestments((previous) => [...previous, investment]);
+export function InvestmentsProvider({ children }: PropsWithChildren) {
+  const [investments, setInvestments] = useState<Investment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    fetchInvestments()
+      .then((data) => {
+        if (isCurrent) {
+          setInvestments(data);
+        }
+      })
+      .catch((cause) => {
+        if (isCurrent) {
+          setError(getErrorMessage(cause));
+        }
+      })
+      .finally(() => {
+        if (isCurrent) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
+
+  const addInvestment = async (investment: NewInvestment) => {
+    try {
+      const created = await insertInvestment(investment);
+
+      setInvestments((previous) => [...previous, created]);
+      setError(null);
+    } catch (cause) {
+      setError(getErrorMessage(cause));
+      throw cause;
+    }
   };
 
-  const removeInvestment = (id: string) => {
-    setInvestments((previous) =>
-      previous.filter((investment) => investment.id !== id),
-    );
+  const removeInvestment = async (id: string) => {
+    try {
+      await deleteInvestment(id);
+
+      setInvestments((previous) =>
+        previous.filter((investment) => investment.id !== id),
+      );
+      setError(null);
+    } catch (cause) {
+      setError(getErrorMessage(cause));
+    }
   };
 
   return (
-    <InvestmentsContext value={{ investments, addInvestment, removeInvestment }}>
+    <InvestmentsContext
+      value={{ investments, isLoading, error, addInvestment, removeInvestment }}
+    >
       {children}
     </InvestmentsContext>
   );

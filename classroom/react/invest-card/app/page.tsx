@@ -5,7 +5,7 @@ import InvestmentForm from '@/components/InvestmentForm';
 import { useInvestments } from '@/contexts/InvestmentsContext';
 
 export default function Home() {
-  const { investments } = useInvestments();
+  const { investments, isLoading, error } = useInvestments();
 
   return (
     <main className="max-w-6xl mx-auto">
@@ -21,16 +21,31 @@ export default function Home() {
         <InvestmentForm />
       </header>
 
-      <section className="investments-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {investments.map((investment) => (
-          <InvestmentCard key={investment.id} investment={investment} />
-        ))}
-      </section>
-
-      {investments.length === 0 && (
-        <p className="text-slate-500">
-          Nenhum investimento na carteira. Adicione um no formulário acima.
+      {error && (
+        <p
+          role="alert"
+          className="mb-6 rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700"
+        >
+          {error}
         </p>
+      )}
+
+      {isLoading ? (
+        <p className="text-slate-500">Carregando investimentos...</p>
+      ) : (
+        <>
+          <section className="investments-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {investments.map((investment) => (
+              <InvestmentCard key={investment.id} investment={investment} />
+            ))}
+          </section>
+
+          {investments.length === 0 && (
+            <p className="text-slate-500">
+              Nenhum investimento na carteira. Adicione um no formulário acima.
+            </p>
+          )}
+        </>
       )}
     </main>
   );

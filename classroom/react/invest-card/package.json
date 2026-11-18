@@ -3,17 +3,24 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "setup": "npm run db:start && npm run db:env",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:status": "supabase status",
+    "db:env": "node scripts/supabase-env.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
+    "@supabase/supabase-js": "^2.119.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.63.0",
-    "next": "16.4.3",
+    "next": "^16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "shadcn": "^4.23.0",
@@ -26,7 +33,8 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.4.3",
+    "eslint-config-next": "^16.4.6",
+    "supabase": "^2.122.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

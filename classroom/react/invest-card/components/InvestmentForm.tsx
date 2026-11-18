@@ -81,6 +81,8 @@ const numberFields = [
 export default function InvestmentForm() {
   const { addInvestment } = useInvestments();
   const [isOpen, setIsOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [formData, setFormData] = useState<InvestmentFormData>(initialFormData);
 
   const handleOpenChange = (open: boolean) => {
@@ -88,6 +90,7 @@ export default function InvestmentForm() {
 
     if (!open) {
       setFormData(initialFormData);
+      setFormError(null);
     }
   };
 
@@ -105,21 +108,30 @@ export default function InvestmentForm() {
     setFormData({ ...formData, category: value ?? '' });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsSaving(true);
+    setFormError(null);
 
-    addInvestment({
-      id: crypto.randomUUID(),
-      name: formData.name,
-      issuer: formData.issuer,
-      type: formData.type,
-      category: formData.category,
-      performance: parseLocaleNumber(formData.performance),
-      currentValue: parseLocaleNumber(formData.currentValue),
-      investedValue: parseLocaleNumber(formData.investedValue),
-    });
+    try {
+      await addInvestment({
+        name: formData.name,
+        issuer: formData.issuer,
+        type: formData.type,
+        category: formData.category,
+        performance: parseLocaleNumber(formData.performance),
+        currentValue: parseLocaleNumber(formData.currentValue),
+        investedValue: parseLocaleNumber(formData.investedValue),
+      });
 
-    handleOpenChange(false);
+      handleOpenChange(false);
+    } catch (cause) {
+      setFormError(
+        cause instanceof Error ? cause.message : 'Erro inesperado ao salvar.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -205,11 +217,19 @@ export default function InvestmentForm() {
             ))}
           </div>
 
+          {formError && (
+            <p role="alert" className="text-sm text-rose-600">
+              {formError}
+            </p>
+          )}
+
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>
               Cancelar
             </DialogClose>
-            <Button type="submit">Adicionar</Button>
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? 'Salvando...' : 'Adicionar'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

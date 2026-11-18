@@ -9,6 +9,21 @@ export type Investment = {
   issuer: string;
 };
 
+export type NewInvestment = Omit<Investment, 'id'>;
+
+/** Formato das colunas da tabela `investments` no Supabase. */
+export type InvestmentRow = {
+  id: string;
+  name: string;
+  type: string;
+  category: string;
+  performance: number;
+  current_value: number;
+  invested_value: number;
+  issuer: string;
+  created_at: string;
+};
+
 export type InvestmentFormData = {
   name: string;
   issuer: string;

@@ -97,6 +97,41 @@ export async function insertInvestment(
   return toInvestment(data as InvestmentRow);
 }
 
+export async function updateInvestment(
+  id: string,
+  investment: NewInvestment,
+): Promise<Investment> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('Faça login para editar um investimento.');
+  }
+
+  const row = toRow(investment, user.id);
+
+  // Quem tem ticker recebe a performance do provider; recalcular aqui
+  // apagaria a variação do dia e poria a rentabilidade acumulada no lugar.
+  const { performance, ...rest } = row;
+  const changes: Record<string, unknown> = investment.ticker
+    ? rest
+    : { ...rest, performance };
+
+  const { data, error } = await supabase
+    .from(TABLE)
+    .update(changes)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Não foi possível salvar as alterações: ${error.message}`);
+  }
+
+  return toInvestment(data as InvestmentRow);
+}
+
 export async function deleteInvestment(id: string): Promise<void> {
   const { error } = await supabase.from(TABLE).delete().eq('id', id);
 

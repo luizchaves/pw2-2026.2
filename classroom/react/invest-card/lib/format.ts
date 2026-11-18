@@ -16,12 +16,26 @@ export function formatPercentage(value: number): string {
   return sign + value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
 }
 
+/** Número em pt-BR, sem símbolo: o que o formulário espera de volta. */
+export function formatLocaleNumber(value: number): string {
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 /**
  * Aceita apenas o formato pt-BR: ponto como separador de milhar e vírgula
  * como separador decimal. Ex.: "-1.234,56", "0,92", "12480,32".
+ *
+ * Vale para os campos de dinheiro, que têm duas casas — não para quantidade,
+ * que em cripto tem oito (0,01662 BTC).
  */
 export const LOCALE_NUMBER_PATTERN =
   '-?\\d{1,3}(\\.\\d{3})*(,\\d{1,2})?|-?\\d+(,\\d{1,2})?';
+
+/** Mesma forma, com qualquer número de casas decimais. */
+const LOCALE_NUMBER_RE = /^(-?\d{1,3}(\.\d{3})*(,\d+)?|-?\d+(,\d+)?)$/;
 
 /**
  * Converte um número escrito em pt-BR (ou em BRL, com "R$" e espaços) para
@@ -30,7 +44,7 @@ export const LOCALE_NUMBER_PATTERN =
 export function parseLocaleNumber(value: string): number {
   const digits = value.replace(/[R$%\s]/g, '').trim();
 
-  if (!new RegExp(`^(${LOCALE_NUMBER_PATTERN})$`).test(digits)) {
+  if (!LOCALE_NUMBER_RE.test(digits)) {
     return NaN;
   }
 

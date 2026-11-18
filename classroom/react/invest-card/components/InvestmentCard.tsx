@@ -26,6 +26,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
+import InvestmentForm from '@/components/InvestmentForm';
+
 type InvestmentCardProps = {
   investment: Investment;
 };
@@ -37,8 +39,8 @@ function formatQuoteTime(isoDate: string): string {
   });
 }
 
-export default function InvestmentCard({
-  investment: {
+export default function InvestmentCard({ investment }: InvestmentCardProps) {
+  const {
     id,
     name,
     issuer,
@@ -52,8 +54,7 @@ export default function InvestmentCard({
     lastQuote,
     quoteSource,
     quoteUpdatedAt,
-  },
-}: InvestmentCardProps) {
+  } = investment;
   const { isOpenEye } = useVisibility();
   const { mutate: removeInvestment, error: removeError } =
     useRemoveInvestment();
@@ -134,36 +135,42 @@ export default function InvestmentCard({
           {type}
         </span>
 
-        <AlertDialog>
-          <AlertDialogTrigger
-            className="shrink-0 -mr-1 p-1 rounded-md text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
-            aria-label={`Remover ${name}`}
-          >
-            <Trash2 className="w-4 h-4" />
-          </AlertDialogTrigger>
+        {/* Editar e remover moram juntos no rodapé, longe do valor: ações
+            ficam na faixa de metadados, não coladas no número que se lê. */}
+        <div className="flex shrink-0 items-center gap-0.5 -mr-1">
+          <InvestmentForm investment={investment} />
 
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogMedia>
-                <TriangleAlert className="text-rose-500" />
-              </AlertDialogMedia>
-              <AlertDialogTitle>Remover investimento?</AlertDialogTitle>
-              <AlertDialogDescription>
-                {name} será removido da sua carteira. Esta ação não pode ser
-                desfeita.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction
-                variant="destructive"
-                onClick={handleRemoveClick}
-              >
-                Remover
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-      </AlertDialog>
+          <AlertDialog>
+            <AlertDialogTrigger
+              className="shrink-0 p-1 rounded-md text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+              aria-label={`Remover ${name}`}
+            >
+              <Trash2 className="w-4 h-4" />
+            </AlertDialogTrigger>
+
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogMedia>
+                  <TriangleAlert className="text-rose-500" />
+                </AlertDialogMedia>
+                <AlertDialogTitle>Remover investimento?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {name} será removido da sua carteira. Esta ação não pode ser
+                  desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={handleRemoveClick}
+                >
+                  Remover
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
     </article>
   );

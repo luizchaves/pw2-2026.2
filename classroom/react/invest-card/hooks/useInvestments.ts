@@ -11,6 +11,7 @@ import {
   deleteInvestment,
   fetchInvestments,
   insertInvestment,
+  updateInvestment,
 } from '@/lib/investments';
 import { requestQuotesRefresh, type RefreshSummary } from '@/lib/quotes-refresh';
 import type { Investment, NewInvestment } from '@/types/investments';
@@ -38,6 +39,21 @@ export function useAddInvestment(): UseMutationResult<
 
   return useMutation({
     mutationFn: insertInvestment,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: investmentKeys.all });
+    },
+  });
+}
+
+export function useUpdateInvestment(): UseMutationResult<
+  Investment,
+  Error,
+  { id: string; investment: NewInvestment }
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, investment }) => updateInvestment(id, investment),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: investmentKeys.all });
     },

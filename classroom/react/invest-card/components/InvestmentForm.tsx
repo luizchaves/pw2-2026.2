@@ -1,15 +1,20 @@
 'use client';
 
 import { useState, type ChangeEvent, type FormEvent } from 'react';
-import { Plus } from 'lucide-react';
-import type { InvestmentFormData } from '@/types/investments';
-import { useAddInvestment } from '@/hooks/useInvestments';
+import { Pencil, Plus } from 'lucide-react';
+import type { Investment, InvestmentFormData } from '@/types/investments';
+import { useAddInvestment, useUpdateInvestment } from '@/hooks/useInvestments';
 import {
   indexerSuggestions,
   investmentCategories,
   investmentTypes,
 } from '@/data/investments';
-import { LOCALE_NUMBER_PATTERN, parseLocaleNumber } from '@/lib/format';
+import {
+  formatLocaleNumber,
+  formatQuantity,
+  LOCALE_NUMBER_PATTERN,
+  parseLocaleNumber,
+} from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,6 +47,22 @@ const initialFormData: InvestmentFormData = {
   indexer: '',
   quantity: '',
 };
+
+/** Reabre um investimento no formulário: números viram texto em pt-BR. */
+function toFormData(investment: Investment): InvestmentFormData {
+  return {
+    name: investment.name,
+    issuer: investment.issuer,
+    type: investment.type,
+    category: investment.category,
+    currentValue: formatLocaleNumber(investment.currentValue),
+    investedValue: formatLocaleNumber(investment.investedValue),
+    ticker: investment.ticker ?? '',
+    indexer: investment.indexer ?? '',
+    quantity:
+      investment.quantity === null ? '' : formatQuantity(investment.quantity),
+  };
+}
 
 const textFields = [
   { name: 'name', label: 'Nome', placeholder: 'PETR4' },
@@ -100,25 +121,35 @@ const numberFields = [
   },
 ] as const;
 
-export default function InvestmentForm() {
-  // A mutation já carrega isPending e error: o componente só guarda o que é
-  // dele mesmo (o dialog, os campos e a validação local).
-  const { mutateAsync: addInvestment, isPending, error, reset } =
-    useAddInvestment();
+type InvestmentFormProps = {
+  /** Presente: o formulário edita este ativo. Ausente: cria um novo. */
+  investment?: Investment;
+};
+
+export default function InvestmentForm({ investment }: InvestmentFormProps) {
+  // As duas mutations são criadas sempre (regras dos hooks); o modo escolhe
+  // qual vale. Elas já carregam isPending e error, então o componente só
+  // guarda o que é dele: o dialog, os campos e a validação local.
+  const addInvestment = useAddInvestment();
+  const updateInvestment = useUpdateInvestment();
   const [isOpen, setIsOpen] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [formData, setFormData] = useState<InvestmentFormData>(initialFormData);
 
-  const formError = validationError ?? error?.message ?? null;
+  const isEditing = investment !== undefined;
+  const mutation = isEditing ? updateInvestment : addInvestment;
+  const { isPending } = mutation;
+
+  const formError = validationError ?? mutation.error?.message ?? null;
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
 
-    if (!open) {
-      setFormData(initialFormData);
-      setValidationError(null);
-      reset();
-    }
+    // Ao abrir em edição, os campos nascem com o que já está salvo; ao
+    // fechar, tudo volta ao zero para a próxima abertura.
+    setFormData(open && investment ? toFormData(investment) : initialFormData);
+    setValidationError(null);
+    mutation.reset();
   };
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -165,7 +196,7 @@ export default function InvestmentForm() {
       const investedValue = parseLocaleNumber(formData.investedValue);
       const currentValueInput = formData.currentValue.trim();
 
-      await addInvestment({
+      const payload = {
         name: formData.name,
         issuer: formData.issuer,
         type: formData.type,
@@ -179,7 +210,13 @@ export default function InvestmentForm() {
         ticker: ticker || null,
         indexer: ticker ? null : indexer || null,
         quantity: ticker ? parseLocaleNumber(quantity) : null,
-      });
+      };
+
+      if (investment) {
+        await updateInvestment.mutateAsync({ id: investment.id, investment: payload });
+      } else {
+        await addInvestment.mutateAsync(payload);
+      }
 
       handleOpenChange(false);
     } catch {
@@ -190,19 +227,32 @@ export default function InvestmentForm() {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger
-        render={<Button size="lg" />}
-        className="bg-emerald-600 text-white hover:bg-emerald-700"
-      >
-        <Plus className="w-4 h-4" />
-        Adicionar investimento
-      </DialogTrigger>
+      {isEditing ? (
+        <DialogTrigger
+          className="shrink-0 p-1 rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+          aria-label={`Editar ${investment.name}`}
+        >
+          <Pencil className="w-4 h-4" />
+        </DialogTrigger>
+      ) : (
+        <DialogTrigger
+          render={<Button size="lg" />}
+          className="bg-emerald-600 text-white hover:bg-emerald-700"
+        >
+          <Plus className="w-4 h-4" />
+          Adicionar investimento
+        </DialogTrigger>
+      )}
 
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Adicionar investimento</DialogTitle>
+          <DialogTitle>
+            {isEditing ? 'Editar investimento' : 'Adicionar investimento'}
+          </DialogTitle>
           <DialogDescription>
-            Preencha os dados do ativo para incluí-lo na sua carteira.
+            {isEditing
+              ? 'Altere os dados do ativo. A carteira é atualizada na hora.'
+              : 'Preencha os dados do ativo para incluí-lo na sua carteira.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -332,7 +382,7 @@ export default function InvestmentForm() {
               Cancelar
             </DialogClose>
             <Button type="submit" disabled={isPending}>
-              {isPending ? 'Salvando...' : 'Adicionar'}
+              {isPending ? 'Salvando...' : isEditing ? 'Salvar' : 'Adicionar'}
             </Button>
           </DialogFooter>
         </form>

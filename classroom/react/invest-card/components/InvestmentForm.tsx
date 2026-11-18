@@ -3,7 +3,7 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { Plus } from 'lucide-react';
 import type { InvestmentFormData } from '@/types/investments';
-import { useInvestments } from '@/contexts/InvestmentsContext';
+import { useAddInvestment } from '@/hooks/useInvestments';
 import { investmentCategories, investmentTypes } from '@/data/investments';
 import { LOCALE_NUMBER_PATTERN, parseLocaleNumber } from '@/lib/format';
 import { Button } from '@/components/ui/button';
@@ -98,18 +98,23 @@ const numberFields = [
 ] as const;
 
 export default function InvestmentForm() {
-  const { addInvestment } = useInvestments();
+  // A mutation já carrega isPending e error: o componente só guarda o que é
+  // dele mesmo (o dialog, os campos e a validação local).
+  const { mutateAsync: addInvestment, isPending, error, reset } =
+    useAddInvestment();
   const [isOpen, setIsOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [formData, setFormData] = useState<InvestmentFormData>(initialFormData);
+
+  const formError = validationError ?? error?.message ?? null;
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
 
     if (!open) {
       setFormData(initialFormData);
-      setFormError(null);
+      setValidationError(null);
+      reset();
     }
   };
 
@@ -129,15 +134,13 @@ export default function InvestmentForm() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsSaving(true);
-    setFormError(null);
+    setValidationError(null);
 
     const ticker = formData.ticker.trim().toUpperCase();
     const quantity = formData.quantity.trim();
 
     if (ticker && !quantity) {
-      setFormError('Informe a quantidade para poder cotar o ticker.');
-      setIsSaving(false);
+      setValidationError('Informe a quantidade para poder cotar o ticker.');
 
       return;
     }
@@ -156,12 +159,9 @@ export default function InvestmentForm() {
       });
 
       handleOpenChange(false);
-    } catch (cause) {
-      setFormError(
-        cause instanceof Error ? cause.message : 'Erro inesperado ao salvar.',
-      );
-    } finally {
-      setIsSaving(false);
+    } catch {
+      // A mensagem vem de error.message da mutation; o catch existe só para o
+      // dialog não fechar quando o insert falha.
     }
   };
 
@@ -274,8 +274,8 @@ export default function InvestmentForm() {
             <DialogClose render={<Button variant="outline" />}>
               Cancelar
             </DialogClose>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? 'Salvando...' : 'Adicionar'}
+            <Button type="submit" disabled={isPending}>
+              {isPending ? 'Salvando...' : 'Adicionar'}
             </Button>
           </DialogFooter>
         </form>

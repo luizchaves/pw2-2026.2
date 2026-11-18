@@ -1,13 +1,15 @@
 'use client';
 
 import type { PropsWithChildren } from 'react';
-import { InvestmentsProvider } from '@/contexts/InvestmentsContext';
+import QueryProvider from '@/contexts/QueryProvider';
 import { VisibilityProvider } from '@/contexts/VisibilityContext';
 
 export default function AppProviders({ children }: PropsWithChildren) {
   return (
-    <VisibilityProvider>
-      <InvestmentsProvider>{children}</InvestmentsProvider>
-    </VisibilityProvider>
+    <QueryProvider>
+      {/* Estado de UI puro (mostrar/esconder valores) segue em Context: não é
+          dado de servidor, então não tem o que cachear. */}
+      <VisibilityProvider>{children}</VisibilityProvider>
+    </QueryProvider>
   );
 }

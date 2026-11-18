@@ -188,6 +188,64 @@ curl -X POST 'http://localhost:3000/api/quotes/refresh?force=1'
 
 Também dá para inverter a ordem com `QUOTE_PROVIDER_ORDER=brapi,yahoo`.
 
+## Estado de servidor com TanStack Query
+
+Os dados da carteira vivem no Supabase, não no React: eles podem mudar fora da
+aba (o `POST /api/quotes/refresh` grava direto no banco) e precisam de
+`loading`, `error`, cache e revalidação. Esse é trabalho de
+[TanStack Query](https://tanstack.com/query), e não de `useState` + `useEffect`
+num Context.
+
+Todo o acesso passa por `hooks/useInvestments.ts`:
+
+| hook                   | o que é            | o que faz                                   |
+| ---------------------- | ------------------ | ------------------------------------------- |
+| `useInvestments()`     | `useQuery`         | lê a carteira (`data`, `isPending`, `error`) |
+| `useAddInvestment()`   | `useMutation`      | insere e invalida a lista                    |
+| `useRemoveInvestment()`| `useMutation`      | remove de forma otimista, com rollback       |
+| `useRefreshQuotes()`   | `useMutation`      | chama o Route Handler e invalida a lista     |
+
+A chave `['investments']` (em `investmentKeys.all`) é o ponto de encontro: cada
+mutation termina invalidando-a, e **qualquer** componente que use
+`useInvestments()` recebe os dados novos — sem prop drilling e sem um estado
+compartilhado escrito à mão.
+
+```ts
+onSuccess: () => {
+  void queryClient.invalidateQueries({ queryKey: investmentKeys.all });
+}
+```
+
+O `QueryClient` fica em `contexts/QueryProvider.tsx`, criado dentro de
+`useState` para o cache ser por árvore React (no servidor, dois usuários
+renderizando ao mesmo tempo não compartilham dados). Os defaults valem para
+todas as queries:
+
+- `staleTime: 60_000` — dentro de 1 min os dados são frescos, então remontar um
+  componente ou voltar para a aba não dispara request novo;
+- `retry: 1` — uma segunda tentativa antes de mostrar erro.
+
+Dois estados que o Context antigo não tinha como distinguir:
+
+- `isPending` — primeiro carregamento, ainda não há nada para mostrar;
+- `isFetching` — revalidação em background, com os dados antigos na tela (a
+  grade de cards fica translúcida em vez de desaparecer).
+
+### Remoção otimista
+
+`useRemoveInvestment` usa o trio `onMutate` / `onError` / `onSettled`: tira o
+card do cache antes da resposta do banco (a UI reage na hora), guarda um
+snapshot e o restaura se o delete falhar — nesse caso o card volta para a lista
+com a mensagem de erro.
+
+### Devtools
+
+`ReactQueryDevtools` entra junto com o provider e aparece como um botão
+flutuante em desenvolvimento. Ele mostra as queries em cache, o estado de cada
+uma (`fresh`, `stale`, `fetching`) e os dados guardados — é a forma mais rápida
+de ver a invalidação acontecendo ao adicionar um investimento ou atualizar as
+cotações.
+
 ## Estrutura dos dados
 
 Tabela `public.investments` (`supabase/migrations/`):
@@ -218,10 +276,12 @@ por regras baseadas em `auth.uid()`.
 
 - `lib/supabase.ts` — cliente Supabase do browser.
 - `lib/investments.ts` — acesso aos dados e conversão `snake_case` ↔ `camelCase`.
-- `contexts/InvestmentsContext.tsx` — estado da carteira (`isLoading`, `error`,
-  `addInvestment`, `removeInvestment`).
+- `hooks/useInvestments.ts` — queries e mutations da carteira (TanStack Query).
+- `contexts/QueryProvider.tsx` — `QueryClient` e devtools.
+- `contexts/VisibilityContext.tsx` — estado de UI (mostrar/esconder valores).
 - `data/investments.ts` — apenas as opções fixas de tipo e categoria.
 - `lib/supabase-server.ts` — client de servidor com a secret key (nunca no cliente).
+- `lib/quotes-refresh.ts` — chamada do browser para o Route Handler de cotações.
 - `lib/quotes/` — providers de cotação e a cadeia de fallback.
 - `app/api/quotes/refresh/route.ts` — Route Handler que atualiza as cotações.
 - `scripts/supabase-env.mjs` — gera o `.env.local` a partir de `supabase status`.

@@ -1,7 +1,7 @@
 'use client';
 
 import { formatCurrency, formatPercentage, formatQuantity } from '@/lib/format';
-import { useInvestments } from '@/contexts/InvestmentsContext';
+import { useRemoveInvestment } from '@/hooks/useInvestments';
 import { useVisibility } from '@/contexts/VisibilityContext';
 import { cn } from '@/lib/utils';
 import type { Investment } from '@/types/investments';
@@ -53,10 +53,11 @@ export default function InvestmentCard({
   },
 }: InvestmentCardProps) {
   const { isOpenEye } = useVisibility();
-  const { removeInvestment } = useInvestments();
+  const { mutate: removeInvestment, error: removeError } =
+    useRemoveInvestment();
 
   const handleRemoveClick = () => {
-    void removeInvestment(id);
+    removeInvestment(id);
   };
 
   // Procedência da cotação: fora do rodapé para não poluir, mas disponível no
@@ -109,6 +110,13 @@ export default function InvestmentCard({
         <p className="text-sm text-slate-400">
           Investido: {isOpenEye ? formatCurrency(investedValue) : 'R$ ****'}
         </p>
+        {/* A remoção é otimista: o card volta para a lista se o banco recusar,
+            e aí esta linha explica por quê. */}
+        {removeError && (
+          <p role="alert" className="mt-1 text-xs text-rose-600">
+            {removeError.message}
+          </p>
+        )}
       </div>
 
       {/* mt-auto cola o rodapé na base: os cards sem cotação têm uma linha a

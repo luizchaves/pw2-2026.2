@@ -1,62 +1,28 @@
 'use client';
 
-import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useInvestments } from '@/contexts/InvestmentsContext';
-
-type RefreshSummary = {
-  refreshed: { ticker: string; source: string }[];
-  failed: { ticker: string; reason: string }[];
-};
+import { useRefreshQuotes } from '@/hooks/useInvestments';
 
 export default function RefreshQuotesButton() {
-  const { reload } = useInvestments();
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const { mutate, isPending, data, error } = useRefreshQuotes();
 
-  const handleClick = async () => {
-    setIsRefreshing(true);
-    setMessage(null);
-
-    try {
-      const response = await fetch('/api/quotes/refresh?force=1', {
-        method: 'POST',
-      });
-      const body = await response.json();
-
-      if (!response.ok && !body?.refreshed) {
-        throw new Error(body?.error ?? `HTTP ${response.status}`);
-      }
-
-      // O sucesso já aparece nos próprios cards (preço, provider e horário);
-      // só vale avisar o que NÃO foi atualizado.
-      const { failed = [] } = body as RefreshSummary;
-
-      if (failed.length > 0) {
-        setMessage(`${failed.length} sem cotação`);
-      }
-
-      await reload();
-    } catch (cause) {
-      setMessage(
-        cause instanceof Error ? cause.message : 'Falha ao atualizar cotações.',
-      );
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
+  // O sucesso já aparece nos próprios cards (preço, provider e horário);
+  // só vale avisar o que NÃO foi atualizado.
+  const message =
+    error?.message ??
+    (data && data.failed.length > 0 ? `${data.failed.length} sem cotação` : null);
 
   return (
     <div className="flex flex-col items-end gap-1">
       <Button
         variant="outline"
         size="lg"
-        onClick={handleClick}
-        disabled={isRefreshing}
+        onClick={() => mutate()}
+        disabled={isPending}
       >
-        <RefreshCw className={isRefreshing ? 'w-4 h-4 animate-spin' : 'w-4 h-4'} />
-        {isRefreshing ? 'Atualizando...' : 'Atualizar cotações'}
+        <RefreshCw className={isPending ? 'w-4 h-4 animate-spin' : 'w-4 h-4'} />
+        {isPending ? 'Atualizando...' : 'Atualizar cotações'}
       </Button>
 
       {message && (

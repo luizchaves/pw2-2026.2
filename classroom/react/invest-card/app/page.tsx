@@ -3,10 +3,15 @@
 import InvestmentCard from '@/components/InvestmentCard';
 import InvestmentForm from '@/components/InvestmentForm';
 import RefreshQuotesButton from '@/components/RefreshQuotesButton';
-import { useInvestments } from '@/contexts/InvestmentsContext';
+import { useInvestments } from '@/hooks/useInvestments';
 
 export default function Home() {
-  const { investments, isLoading, error } = useInvestments();
+  const {
+    data: investments = [],
+    isPending,
+    isFetching,
+    error,
+  } = useInvestments();
 
   return (
     <main className="max-w-6xl mx-auto">
@@ -30,15 +35,23 @@ export default function Home() {
           role="alert"
           className="mb-6 rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700"
         >
-          {error}
+          {error.message}
         </p>
       )}
 
-      {isLoading ? (
+      {isPending ? (
         <p className="text-slate-500">Carregando investimentos...</p>
       ) : (
         <>
-          <section className="investments-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* isFetching (e não isPending) é o refetch em background: os cards
+              continuam na tela com os dados antigos enquanto chega o novo. */}
+          <section
+            className={
+              isFetching
+                ? 'investments-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60 transition-opacity'
+                : 'investments-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity'
+            }
+          >
             {investments.map((investment) => (
               <InvestmentCard key={investment.id} investment={investment} />
             ))}

@@ -1,14 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-/** Rotas que abrem sem sessão. A landing é uma delas. */
-const PUBLIC_ROUTES = ['/', '/login', '/signup'];
-
-/** Rotas que não fazem sentido para quem já entrou. */
-const AUTH_ROUTES = ['/login', '/signup'];
-
-/** Primeira tela de quem já está logado. */
-const HOME_ROUTE = '/dashboard';
+import { AUTH_ROUTES, HOME_ROUTE, PUBLIC_ROUTES, ROUTES } from '@/lib/routes';
 
 /**
  * Renova a sessão e decide quem entra. Roda no proxy (o antigo middleware),
@@ -61,7 +54,7 @@ export async function updateSession(request: NextRequest) {
   if (!user && !isPublicRoute) {
     const redirectUrl = request.nextUrl.clone();
 
-    redirectUrl.pathname = '/login';
+    redirectUrl.pathname = ROUTES.login;
     // Guarda para onde a pessoa queria ir, para voltar depois do login.
     redirectUrl.searchParams.set('next', pathname);
 

@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSignOut, useUser } from '@/features/auth/hooks/useAuth';
+import { ROUTES } from '@/lib/routes';
 
 /**
  * Iniciais a partir do e-mail — é o único nome que temos, já que o cadastro
@@ -42,7 +43,7 @@ export default function UserMenu() {
   const handleSignOut = () => {
     signOut(undefined, {
       onSuccess: () => {
-        router.replace('/');
+        router.replace(ROUTES.landing);
         // O proxy precisa reavaliar a sessão já sem o cookie.
         router.refresh();
       },

@@ -1,5 +1,5 @@
 import { connection } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 /**
  * Quem está logado, lido no servidor a partir dos cookies. Ler a sessão no

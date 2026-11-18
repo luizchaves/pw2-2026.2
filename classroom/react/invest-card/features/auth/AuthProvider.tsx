@@ -2,7 +2,7 @@
 
 import { useEffect, type PropsWithChildren } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { authKeys } from '@/features/auth/hooks/useAuth';
 import { investmentKeys } from '@/features/investments/hooks/useInvestments';
 

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { returnPercentage } from '@/features/investments/portfolio';
 import type {
   Investment,

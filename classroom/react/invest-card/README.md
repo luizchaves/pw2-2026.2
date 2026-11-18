@@ -137,9 +137,9 @@ do browser. São três clientes, um por ambiente:
 
 | arquivo                 | onde roda            | para quê                         |
 | ----------------------- | -------------------- | -------------------------------- |
-| `lib/supabase.ts`       | browser              | queries e mutations da interface |
-| `lib/supabase-server.ts`| Route Handlers       | ler a sessão dos cookies         |
-| `lib/supabase-proxy.ts` | proxy (middleware)   | renovar o token e barrar rotas   |
+| `lib/supabase/client.ts`| browser              | queries e mutations da interface |
+| `lib/supabase/server.ts`| Route Handlers       | ler a sessão dos cookies         |
+| `lib/supabase/proxy.ts` | proxy (middleware)   | renovar o token e barrar rotas   |
 
 ### proxy.ts: renovar a sessão e barrar rota
 
@@ -281,7 +281,7 @@ Esta é a primeira parte do app que **não pode** rodar no browser:
 2. o Yahoo não manda header de CORS, então `fetch` do cliente falharia;
 3. o rate limit precisa ser compartilhado entre os usuários, não por aba aberta.
 
-O Route Handler usa o client de servidor (`lib/supabase-server.ts`), que lê a
+O Route Handler usa o client de servidor (`lib/supabase/server.ts`), que lê a
 sessão dos cookies e continua sujeito ao RLS: ele só enxerga — e só atualiza —
 os ativos de quem fez a chamada.
 
@@ -430,10 +430,12 @@ formatação, primitivos de UI, providers) fica fora.
 ```
 features/
   investments/
-    components/   InvestmentCard, InvestmentForm, RefreshQuotesButton
-    hooks/        useInvestments (query + mutations)
+    components/   InvestmentCard, InvestmentForm, RefreshQuotesButton,
+                  StatCard, Movers, CategoryAllocation
+    hooks/        useInvestments (query + mutations), useInvestmentForm
     api.ts        acesso ao Supabase e conversão snake_case ↔ camelCase
     portfolio.ts  somas e proporções do dashboard (cálculo puro)
+    form-fields.ts  a descrição dos campos do formulário
     options.ts    tipos e categorias fixos do formulário
     types.ts      Investment, NewInvestment, InvestmentRow
     quotes/       providers de cotação e a cadeia de fallback (servidor)
@@ -444,11 +446,25 @@ features/
     session.ts    a sessão lida no servidor, para as telas públicas
     AuthProvider.tsx  liga os eventos de sessão ao cache
 app/              rotas, em (public) e (private)
-components/       NavShell, Navbar, PublicNavbar, EyeToggle e ui/
+components/       NavShell, Navbar, PublicNavbar, EyeToggle, Money e ui/
 contexts/         QueryProvider, VisibilityContext, AppProviders
-lib/              supabase.ts, supabase-server.ts, supabase-proxy.ts,
-                  format.ts, utils.ts
+lib/              supabase/ (client, server, proxy), routes.ts,
+                  format.ts, cn.ts
 ```
+
+Duas convenções que valem a pena notar:
+
+- **Página compõe, componente apresenta.** As páginas em `app/` montam blocos
+  e cuidam dos estados de carregando/erro/vazio; quem desenha mora em
+  `features/*/components/`. Foi assim que o dashboard saiu de 241 para 116
+  linhas.
+- **Regra de negócio sai do JSX.** `useInvestmentForm` guarda estado,
+  validação e escrita do formulário; o componente ficou só com a marcação.
+  `components/Money.tsx` faz o mesmo com o olho da navbar: a regra do
+  `R$ ****` existe em um lugar, em vez de um `isOpenEye ?` em cada valor.
+- **Caminhos em `lib/routes.ts`.** Mover uma tela é mudar uma linha; quando a
+  carteira saiu de `/` para `/investments`, o endereço estava repetido em
+  quatro arquivos.
 
 Antes disso, acrescentar uma coluna como o indexador encostava em quatro
 pastas (`components/`, `hooks/`, `lib/`, `types/`) para uma mudança só. É esse
@@ -461,9 +477,11 @@ Fora de `features/`:
 - `app/(private)/investments/page.tsx` — a carteira, card a card.
 - `app/(private)/dashboard/page.tsx` — a mesma carteira consolidada.
 - `app/api/quotes/refresh/route.ts` — Route Handler que atualiza as cotações.
-- `lib/supabase.ts` — cliente Supabase do browser.
-- `lib/supabase-server.ts` — client de servidor que lê a sessão dos cookies.
-- `lib/supabase-proxy.ts` + `proxy.ts` — renovação da sessão e proteção de rotas.
+- `lib/supabase/client.ts` — cliente Supabase do browser.
+- `lib/supabase/server.ts` — client de servidor que lê a sessão dos cookies.
+- `lib/supabase/proxy.ts` + `proxy.ts` — renovação da sessão e proteção de rotas.
+- `lib/cn.ts` — o helper de classes do shadcn (o alias `utils` do
+  `components.json` aponta para ele).
 - `contexts/QueryProvider.tsx` — `QueryClient` e devtools.
 - `contexts/VisibilityContext.tsx` — estado de UI (mostrar/esconder valores).
 - `components/NavShell.tsx` — a casca das duas barras.

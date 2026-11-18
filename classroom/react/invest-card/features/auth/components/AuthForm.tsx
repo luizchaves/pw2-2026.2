@@ -8,13 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSignIn, useSignUp } from '@/features/auth/hooks/useAuth';
+import { HOME_ROUTE, ROUTES } from '@/lib/routes';
 
 type AuthFormProps = {
   mode: 'signin' | 'signup';
 };
 
-/** Para onde vai quem entrou sem ter pedido uma página específica. */
-const HOME_ROUTE = '/dashboard';
+
 
 /**
  * Só aceita destino dentro da própria aplicação. Testar `startsWith('/')` não
@@ -45,7 +45,7 @@ const copy = {
     pending: 'Entrando...',
     footer: 'Ainda não tem conta?',
     linkLabel: 'Criar conta',
-    linkHref: '/signup',
+    linkHref: ROUTES.signup,
     Icon: LogIn,
   },
   signup: {
@@ -55,7 +55,7 @@ const copy = {
     pending: 'Criando...',
     footer: 'Já tem conta?',
     linkLabel: 'Entrar',
-    linkHref: '/login',
+    linkHref: ROUTES.login,
     Icon: UserPlus,
   },
 } as const;

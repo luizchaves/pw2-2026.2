@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server';
-import { updateSession } from '@/lib/supabase-proxy';
+import { updateSession } from '@/lib/supabase/proxy';
 
 // No Next.js 16 o middleware passou a se chamar proxy: mesmo arquivo na raiz,
 // mesma função, nome novo.

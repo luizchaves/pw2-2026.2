@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import EyeToggle from '@/components/EyeToggle';
 import NavShell from '@/components/NavShell';
 import UserMenu from '@/features/auth/components/UserMenu';
+import { ROUTES } from '@/lib/routes';
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -13,8 +14,8 @@ import {
 } from '@/components/ui/navigation-menu';
 
 const links = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/investments', label: 'Investimentos' },
+  { href: ROUTES.dashboard, label: 'Dashboard' },
+  { href: ROUTES.investments, label: 'Investimentos' },
 ];
 
 /**
@@ -26,7 +27,7 @@ export default function Navbar() {
 
   return (
     <NavShell
-      brandHref="/dashboard"
+      brandHref={ROUTES.dashboard}
       left={
         <NavigationMenu>
           <NavigationMenuList className="gap-1">

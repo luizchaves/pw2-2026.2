@@ -8,7 +8,7 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query';
 import type { User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase/client';
 
 export type Credentials = {
   email: string;

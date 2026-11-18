@@ -1,9 +1,10 @@
 'use client';
 
 import { formatCurrency, formatPercentage, formatQuantity } from '@/lib/format';
+import Money from '@/components/Money';
 import { useRemoveInvestment } from '@/features/investments/hooks/useInvestments';
 import { useVisibility } from '@/contexts/VisibilityContext';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/cn';
 import type { Investment } from '@/features/investments/types';
 import {
   Minus,
@@ -101,7 +102,7 @@ export default function InvestmentCard({ investment }: InvestmentCardProps) {
       <div>
         <p className="flex items-center gap-1 text-2xl font-bold text-slate-800">
           <Wallet className="w-4 h-4 text-slate-400" />
-          {isOpenEye ? formatCurrency(currentValue) : 'R$ ****'}
+          <Money value={currentValue} />
         </p>
         {lastQuote !== null && (
           <p className="text-xs text-slate-400" title={quoteLabel}>
@@ -115,7 +116,7 @@ export default function InvestmentCard({ investment }: InvestmentCardProps) {
             então o olho não esconde. */}
         {indexer && <p className="text-xs text-slate-400">Rende {indexer}</p>}
         <p className="text-sm text-slate-400">
-          Investido: {isOpenEye ? formatCurrency(investedValue) : 'R$ ****'}
+          Investido: <Money value={investedValue} />
         </p>
         {/* A remoção é otimista: o card volta para a lista se o banco recusar,
             e aí esta linha explica por quê. */}

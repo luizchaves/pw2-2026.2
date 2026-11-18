@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchQuotes, type QuoteAttempt } from '@/features/investments/quotes';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // Isto roda no servidor porque:
 // 1. o BRAPI_TOKEN não pode ir para o bundle do browser;

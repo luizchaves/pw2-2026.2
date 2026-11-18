@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getSessionUser } from '@/features/auth/session';
+import { HOME_ROUTE, ROUTES } from '@/lib/routes';
 
 const features = [
   {
@@ -42,7 +43,7 @@ async function LandingActions() {
         size="lg"
         nativeButton={false}
         className="bg-emerald-600 text-white hover:bg-emerald-700"
-        render={<Link href="/dashboard" />}
+        render={<Link href={HOME_ROUTE} />}
       >
         Ir para o dashboard
         <ArrowRight className="size-4" />
@@ -56,7 +57,7 @@ async function LandingActions() {
         size="lg"
         nativeButton={false}
         className="bg-emerald-600 text-white hover:bg-emerald-700"
-        render={<Link href="/signup" />}
+        render={<Link href={ROUTES.signup} />}
       >
         Criar conta
         <ArrowRight className="size-4" />
@@ -65,7 +66,7 @@ async function LandingActions() {
         size="lg"
         variant="outline"
         nativeButton={false}
-        render={<Link href="/login" />}
+        render={<Link href={ROUTES.login} />}
       >
         Entrar
       </Button>

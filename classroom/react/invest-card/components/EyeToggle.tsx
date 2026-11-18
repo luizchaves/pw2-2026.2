@@ -2,7 +2,7 @@
 
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/cn';
 import { useVisibility } from '@/contexts/VisibilityContext';
 
 export default function EyeToggle() {

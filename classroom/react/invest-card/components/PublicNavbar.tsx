@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import NavShell from '@/components/NavShell';
 import { Button } from '@/components/ui/button';
+import { HOME_ROUTE, ROUTES } from '@/lib/routes';
 
 type PublicNavbarProps = {
   /** O layout lê a sessão no servidor e avisa aqui. */
@@ -20,12 +21,12 @@ export default function PublicNavbar({ isSignedIn = false }: PublicNavbarProps) 
   if (isSignedIn) {
     return (
       <NavShell
-        brandHref="/dashboard"
+        brandHref={HOME_ROUTE}
         right={
           <Button
             nativeButton={false}
             className="bg-emerald-600 text-white hover:bg-emerald-700"
-            render={<Link href="/dashboard" />}
+            render={<Link href={HOME_ROUTE} />}
           >
             Ir para o dashboard
           </Button>
@@ -36,23 +37,23 @@ export default function PublicNavbar({ isSignedIn = false }: PublicNavbarProps) 
 
   return (
     <NavShell
-      brandHref="/"
+      brandHref={ROUTES.landing}
       right={
         <>
-          {pathname !== '/login' && (
+          {pathname !== ROUTES.login && (
             <Button
               variant="ghost"
               nativeButton={false}
-              render={<Link href="/login" />}
+              render={<Link href={ROUTES.login} />}
             >
               Entrar
             </Button>
           )}
-          {pathname !== '/signup' && (
+          {pathname !== ROUTES.signup && (
             <Button
               nativeButton={false}
               className="bg-emerald-600 text-white hover:bg-emerald-700"
-              render={<Link href="/signup" />}
+              render={<Link href={ROUTES.signup} />}
             >
               Criar conta
             </Button>

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { returnPercentage } from '@/lib/portfolio';
 import type {
   Investment,
   InvestmentRow,
@@ -18,6 +19,7 @@ function toInvestment(row: InvestmentRow): Investment {
     currentValue: Number(row.current_value),
     investedValue: Number(row.invested_value),
     ticker: row.ticker,
+    indexer: row.indexer,
     quantity: row.quantity === null ? null : Number(row.quantity),
     lastQuote: row.last_quote === null ? null : Number(row.last_quote),
     quoteSource: row.quote_source,
@@ -32,11 +34,18 @@ function toRow(investment: NewInvestment, userId: string) {
     issuer: investment.issuer,
     type: investment.type,
     category: investment.category,
-    performance: investment.performance,
+    // Ninguém digita performance: aqui ela é a rentabilidade do aporte. Para
+    // quem tem ticker, o /api/quotes/refresh troca por a variação do dia na
+    // primeira atualização.
+    performance: Number(
+      returnPercentage(investment.currentValue, investment.investedValue).toFixed(2),
+    ),
     current_value: investment.currentValue,
     invested_value: investment.investedValue,
     // Sem ticker o ativo nunca é cotado: fica com os valores digitados.
     ticker: investment.ticker,
+    // O banco recusa indexador junto com ticker (check constraint).
+    indexer: investment.indexer,
     quantity: investment.quantity,
   };
 }

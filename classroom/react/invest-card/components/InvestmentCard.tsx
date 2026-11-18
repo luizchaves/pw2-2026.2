@@ -6,6 +6,7 @@ import { useVisibility } from '@/contexts/VisibilityContext';
 import { cn } from '@/lib/utils';
 import type { Investment } from '@/types/investments';
 import {
+  Minus,
   TrendingDown,
   TrendingUp,
   Trash2,
@@ -46,6 +47,7 @@ export default function InvestmentCard({
     currentValue,
     investedValue,
     ticker,
+    indexer,
     quantity,
     lastQuote,
     quoteSource,
@@ -78,19 +80,19 @@ export default function InvestmentCard({
           <span className="text-xs text-slate-400">{issuer}</span>
         </div>
 
+        {/* Zero é estado comum — ativo recém-cadastrado, antes da primeira
+            cotação —, então tem cor própria: vermelho ali sugeriria prejuízo. */}
         <span
           className={cn(
             'flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full',
-            performance > 0
-              ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-rose-100 text-rose-700',
+            performance > 0 && 'bg-emerald-100 text-emerald-700',
+            performance < 0 && 'bg-rose-100 text-rose-700',
+            performance === 0 && 'bg-slate-100 text-slate-500',
           )}
         >
-          {performance > 0 ? (
-            <TrendingUp className="w-3 h-3" />
-          ) : (
-            <TrendingDown className="w-3 h-3" />
-          )}
+          {performance > 0 && <TrendingUp className="w-3 h-3" />}
+          {performance < 0 && <TrendingDown className="w-3 h-3" />}
+          {performance === 0 && <Minus className="w-3 h-3" />}
           {formatPercentage(performance)}
         </span>
       </div>
@@ -107,6 +109,10 @@ export default function InvestmentCard({
               : `${formatCurrency(lastQuote)} / un.`}
           </p>
         )}
+        {/* Ocupa a mesma linha da cotação — os dois nunca aparecem juntos,
+            porque indexador é de quem não tem ticker. Não é valor pessoal,
+            então o olho não esconde. */}
+        {indexer && <p className="text-xs text-slate-400">Rende {indexer}</p>}
         <p className="text-sm text-slate-400">
           Investido: {isOpenEye ? formatCurrency(investedValue) : 'R$ ****'}
         </p>

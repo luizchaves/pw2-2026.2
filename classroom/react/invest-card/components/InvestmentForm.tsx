@@ -4,7 +4,11 @@ import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { Plus } from 'lucide-react';
 import type { InvestmentFormData } from '@/types/investments';
 import { useAddInvestment } from '@/hooks/useInvestments';
-import { investmentCategories, investmentTypes } from '@/data/investments';
+import {
+  indexerSuggestions,
+  investmentCategories,
+  investmentTypes,
+} from '@/data/investments';
 import { LOCALE_NUMBER_PATTERN, parseLocaleNumber } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,10 +36,10 @@ const initialFormData: InvestmentFormData = {
   issuer: '',
   type: '',
   category: '',
-  performance: '',
   currentValue: '',
   investedValue: '',
   ticker: '',
+  indexer: '',
   quantity: '',
 };
 
@@ -76,24 +80,23 @@ const quoteFields = [
   },
 ] as const;
 
+// Sem campo de performance: ela é calculada a partir destes dois valores
+// (e, para quem tem ticker, sobrescrita pela cotação no próximo refresh).
+// O que foi aportado vem primeiro: é o dado que a pessoa sempre tem na mão.
+// O valor atual vem depois e só é dispensável quando há ticker — aí ele nasce
+// da cotação (quantidade × preço) na primeira atualização.
 const numberFields = [
   {
-    name: 'performance',
-    label: 'Performance',
-    prefix: '%',
-    placeholder: '1,84',
+    name: 'investedValue',
+    label: 'Valor investido',
+    prefix: 'R$',
+    placeholder: '3.400,00',
   },
   {
     name: 'currentValue',
     label: 'Valor atual',
     prefix: 'R$',
     placeholder: '3.245,10',
-  },
-  {
-    name: 'investedValue',
-    label: 'Valor investido',
-    prefix: 'R$',
-    placeholder: '3.400,00',
   },
 ] as const;
 
@@ -132,6 +135,8 @@ export default function InvestmentForm() {
     setFormData({ ...formData, category: value ?? '' });
   };
 
+  const hasTicker = formData.ticker.trim() !== '';
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setValidationError(null);
@@ -145,16 +150,34 @@ export default function InvestmentForm() {
       return;
     }
 
+    const indexer = formData.indexer.trim();
+
+    // Mesma regra que a check constraint do banco, só que avisando antes.
+    if (ticker && indexer) {
+      setValidationError(
+        'Ativo com ticker é cotado pelo mercado: deixe o indexador vazio.',
+      );
+
+      return;
+    }
+
     try {
+      const investedValue = parseLocaleNumber(formData.investedValue);
+      const currentValueInput = formData.currentValue.trim();
+
       await addInvestment({
         name: formData.name,
         issuer: formData.issuer,
         type: formData.type,
         category: formData.category,
-        performance: parseLocaleNumber(formData.performance),
-        currentValue: parseLocaleNumber(formData.currentValue),
-        investedValue: parseLocaleNumber(formData.investedValue),
+        // Só chega aqui vazio quando há ticker: até a primeira cotação o
+        // ativo vale o que custou, e a performance derivada dá 0%.
+        currentValue: currentValueInput
+          ? parseLocaleNumber(currentValueInput)
+          : investedValue,
+        investedValue,
         ticker: ticker || null,
+        indexer: ticker ? null : indexer || null,
         quantity: ticker ? parseLocaleNumber(quantity) : null,
       });
 
@@ -224,28 +247,40 @@ export default function InvestmentForm() {
               </div>
             ))}
 
-            {numberFields.map(({ name, label, prefix, placeholder }) => (
-              <div key={name} className="grid gap-1.5">
-                <Label htmlFor={name}>{label}</Label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">
-                    {prefix}
-                  </span>
-                  <Input
-                    id={name}
-                    name={name}
-                    inputMode="decimal"
-                    pattern={LOCALE_NUMBER_PATTERN}
-                    value={formData[name]}
-                    onChange={handleChange}
-                    placeholder={placeholder}
-                    title="Use o formato pt-BR, por exemplo 3.245,10"
-                    className="pl-9"
-                    required
-                  />
+            {numberFields.map(({ name, label, prefix, placeholder }) => {
+              // Sem ticker não há de onde tirar o valor atual: ele é obrigatório.
+              const isOptional = name === 'currentValue' && hasTicker;
+
+              return (
+                <div key={name} className="grid gap-1.5">
+                  <Label htmlFor={name}>
+                    {isOptional ? `${label} (opcional)` : label}
+                  </Label>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+                      {prefix}
+                    </span>
+                    <Input
+                      id={name}
+                      name={name}
+                      inputMode="decimal"
+                      pattern={LOCALE_NUMBER_PATTERN}
+                      value={formData[name]}
+                      onChange={handleChange}
+                      placeholder={placeholder}
+                      title="Use o formato pt-BR, por exemplo 3.245,10"
+                      className="pl-9"
+                      required={!isOptional}
+                    />
+                  </div>
+                  {isOptional && (
+                    <span className="text-xs text-slate-400">
+                      A cotação preenche na primeira atualização
+                    </span>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-4">
@@ -262,6 +297,28 @@ export default function InvestmentForm() {
                 <span className="text-xs text-slate-400">{hint}</span>
               </div>
             ))}
+
+            <div className="grid gap-1.5 sm:col-span-2">
+              <Label htmlFor="indexer">Indexador (opcional)</Label>
+              <Input
+                id="indexer"
+                name="indexer"
+                list="indexer-suggestions"
+                value={formData.indexer}
+                onChange={handleChange}
+                placeholder="100% Selic"
+              />
+              {/* datalist: sugere os indexadores mais comuns sem fechar a
+                  lista — a taxa muda de papel para papel. */}
+              <datalist id="indexer-suggestions">
+                {indexerSuggestions.map((suggestion) => (
+                  <option key={suggestion} value={suggestion} />
+                ))}
+              </datalist>
+              <span className="text-xs text-slate-400">
+                Como a renda fixa rende. Deixe vazio quando há ticker.
+              </span>
+            </div>
           </div>
 
           {formError && (

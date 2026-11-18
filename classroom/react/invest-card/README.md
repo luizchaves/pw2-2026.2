@@ -150,7 +150,8 @@ duas coisas:
 1. **renova o access token** (vale 1h) e regrava o cookie, senão a pessoa seria
    deslogada no meio do uso;
 2. **redireciona**: sem sessão, manda para `/login?next=...` (e o login devolve
-   para a página pretendida); com sessão, tira de `/login` e `/signup`.
+   para a página pretendida); com sessão, tira de `/login` e `/signup`. Quem
+   entra sem ter pedido uma página específica cai no `/dashboard`.
 
 A guarda usa `supabase.auth.getUser()`, que valida o token no servidor do
 Supabase, e não `getSession()`, que apenas lê o cookie — e cookie o browser
@@ -179,9 +180,47 @@ current_value = quantity * last_quote
 performance   = variação do dia devolvida pelo provider
 ```
 
+### performance não é digitada
+
+O formulário pergunta **valor investido** e, depois, o **valor atual** — este
+obrigatório só quando não há ticker, porque com ticker a primeira atualização
+de cotações o calcula (`quantity * last_quote`). Vazio, o ativo começa valendo
+o que custou. A performance sai desses dois valores, em `lib/investments.ts`:
+
+```
+performance = (current_value - invested_value) / invested_value * 100
+```
+
+Pedir o número seria pedir algo que a aplicação já sabe — e que, para quem tem
+ticker, seria descartado na primeira atualização de cotações, quando o provider
+grava a variação do dia por cima. Daí a diferença de leitura do badge: para
+bolsa ele mostra o **dia**, para renda fixa o **acumulado** desde o aporte.
+
 Renda fixa e fundos ficam com `ticker` nulo e seguem com os valores informados
 à mão — Tesouro, CDB e fundos não têm ticker de bolsa e precisariam de outras
 fontes (Tesouro Direto, CDI, CVM).
+
+### Indexador: o outro lado do ticker
+
+Renda fixa não tem variação de mercado, tem **regra de remuneração**: um
+Tesouro Selic rende `100% Selic`, um CDB `110% CDI`, um Tesouro IPCA+
+`IPCA + 5,5%`. Isso vai na coluna `indexer`, e o card mostra como
+*Rende 100% Selic* no lugar da linha de cotação.
+
+O campo é **texto livre** (com sugestões via `datalist`, em
+`data/investments.ts`), e não um select: o índice e a taxa mudam de papel para
+papel, e uma lista fechada envelheceria a cada produto novo.
+
+`indexer` e `ticker` são excludentes — o que tem preço de mercado não tem regra
+de remuneração. A regra está no banco, como check constraint, e o formulário
+avisa antes de tentar salvar:
+
+```sql
+check (indexer is null or ticker is null)
+```
+
+O `performance` continua numérico e segue valendo para todo mundo: é a variação
+que alimenta o badge do card e as listas do dashboard.
 
 O `last_quote` já vem preenchido no seed (derivado de
 `current_value / quantity`), então o **preço unitário aparece no card desde o
@@ -291,6 +330,11 @@ mutation termina invalidando-a, e **qualquer** componente que use
 `useInvestments()` recebe os dados novos — sem prop drilling e sem um estado
 compartilhado escrito à mão.
 
+É por isso que o **dashboard não faz request nenhum**: ele chama o mesmo
+`useInvestments()` da home e lê a carteira que já está em cache sob aquela
+chave. Duas telas, uma query — e uma cotação atualizada numa delas aparece na
+outra sozinha.
+
 ```ts
 onSuccess: () => {
   void queryClient.invalidateQueries({ queryKey: investmentKeys.all });
@@ -344,6 +388,7 @@ Tabela `public.investments` (`supabase/migrations/`):
 | `invested_value` | `numeric(14,2)` | valor investido                 |
 | `created_at`     | `timestamptz`   | usado para ordenar a listagem   |
 | `ticker`         | `text`          | nulo para renda fixa e fundos   |
+| `indexer`        | `text`          | remuneração da renda fixa; exclui `ticker` |
 | `quantity`       | `numeric(18,8)` | obrigatória quando há ticker    |
 | `last_quote`     | `numeric(14,4)` | preço unitário; vem no seed     |
 | `quote_currency` | `text`          | moeda da cotação                |
@@ -359,6 +404,11 @@ aula; em produção as contas nascem pelo cadastro da aplicação.
 
 - `lib/supabase.ts` — cliente Supabase do browser.
 - `lib/investments.ts` — acesso aos dados e conversão `snake_case` ↔ `camelCase`.
+- `app/page.tsx` — a carteira, card a card.
+- `app/dashboard/page.tsx` — a mesma carteira consolidada: totais, alocação e
+  variação do dia.
+- `lib/portfolio.ts` — as somas e proporções do dashboard. Cálculo puro (entra
+  uma lista, sai um objeto), fora do componente e fácil de testar.
 - `hooks/useInvestments.ts` — queries e mutations da carteira (TanStack Query).
 - `hooks/useAuth.ts` — sessão, login, cadastro e logout.
 - `contexts/QueryProvider.tsx` — `QueryClient` e devtools.

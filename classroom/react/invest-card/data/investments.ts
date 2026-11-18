@@ -13,6 +13,19 @@ export const investmentTypes: string[] = [
   'Criptomoeda',
 ];
 
+/**
+ * Sugestões para o campo Indexador. É uma lista de atalho (datalist), não um
+ * select: a taxa muda de papel para papel, então o campo aceita qualquer texto.
+ */
+export const indexerSuggestions: string[] = [
+  '100% Selic',
+  '100% CDI',
+  '110% CDI',
+  'IPCA + 5,5%',
+  'IPCA + 6%',
+  'Prefixado 11% a.a.',
+];
+
 export const investmentCategories: string[] = [
   'Renda Fixa',
   'Ações',

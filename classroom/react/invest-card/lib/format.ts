@@ -11,7 +11,8 @@ export function formatQuantity(value: number): string {
 }
 
 export function formatPercentage(value: number): string {
-  const sign = value >= 0 ? '+' : '';
+  // Zero não leva sinal: "+0,00%" sugere uma alta que não houve.
+  const sign = value > 0 ? '+' : '';
   return sign + value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
 }
 

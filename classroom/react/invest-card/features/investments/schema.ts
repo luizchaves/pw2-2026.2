@@ -11,9 +11,15 @@ function isNumber(value: string): boolean {
 const requiredText = (field: string) =>
   z.string().trim().min(1, { error: `Informe ${field}.` });
 
-/** Valor em reais: obrigatório e no formato pt-BR. */
+/**
+ * Valor em reais: obrigatório e no formato pt-BR. O teste de formato ignora o
+ * vazio de propósito — senão o campo em branco acusaria duas coisas ao mesmo
+ * tempo ("informe" e "use o formato"), e só a primeira apareceria na tela.
+ */
 const money = (field: string) =>
-  requiredText(field).refine(isNumber, { error: NUMBER_HINT });
+  requiredText(field).refine((value) => value === '' || isNumber(value), {
+    error: NUMBER_HINT,
+  });
 
 /**
  * As regras do formulário de investimento. O schema é a única fonte: o tipo
@@ -42,10 +48,15 @@ export const investmentFormSchema = z
     error: 'Informe a quantidade para poder cotar o ticker.',
     path: ['quantity'],
   })
-  .refine((values) => !values.ticker || isNumber(values.quantity), {
-    error: NUMBER_HINT,
-    path: ['quantity'],
-  })
+  // Idem: quantidade vazia já é acusada pela regra acima.
+  .refine(
+    (values) =>
+      !values.ticker || values.quantity === '' || isNumber(values.quantity),
+    {
+      error: NUMBER_HINT,
+      path: ['quantity'],
+    },
+  )
   // Mesma regra da check constraint do banco, só que avisando antes.
   .refine((values) => !values.ticker || values.indexer === '', {
     error: 'Ativo com ticker é cotado pelo mercado: deixe o indexador vazio.',

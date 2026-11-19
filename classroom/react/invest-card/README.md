@@ -57,6 +57,10 @@ O Supabase Studio local fica em [http://127.0.0.1:54353](http://127.0.0.1:54353)
 | `npm run db:reset`           | recria o banco: migrations + seed                |
 | `npm run db:status`          | mostra URLs e chaves do ambiente local           |
 | `npm run db:env -- --force`  | regrava o `.env.local` com os valores locais     |
+| `npm test`                   | testes de unidade e componente (Vitest)          |
+| `npm run test:watch`         | os mesmos, repetindo a cada mudança              |
+| `npm run test:coverage`      | cobertura em `coverage/index.html`               |
+| `npm run test:e2e`           | fluxos completos no browser (Playwright)         |
 
 ## Fazendo deploy para a nuvem
 
@@ -418,6 +422,68 @@ Outras decisões que valem nota:
   de `mutation.error` e fica no rodapé do formulário.
 - A conversão dos campos (texto em pt-BR) para o que o banco recebe mora no
   mesmo arquivo do schema, em `toNewInvestment()`.
+
+## Testes
+
+Três níveis, do mais barato ao mais caro:
+
+| nível      | ferramenta               | o que cobre                                     |
+| ---------- | ------------------------ | ----------------------------------------------- |
+| unidade    | Vitest                   | formatação, cálculos da carteira, schemas, providers de cotação |
+| integração | Vitest                   | camada de dados, hooks de query, Route Handler, proxy |
+| componente | Vitest + Testing Library | cards, formulários, páginas e barras             |
+| e2e        | Playwright               | login, carteira e dashboard no browser de verdade |
+
+São **135 testes no Vitest** (~4s) e **10 fluxos no Playwright** (~10s).
+
+```bash
+npm test
+```
+
+```bash
+npm run test:e2e
+```
+
+Os arquivos de teste ficam **ao lado do que testam** (`portfolio.ts` e
+`portfolio.test.ts`), menos o e2e, que vive em `e2e/`. Quem muda o código
+tropeça no teste.
+
+### O que cada nível garante
+
+- **Unidade** — as contas e as regras, sem React: `parseLocaleNumber` aceitando
+  `0,01662` (a regressão da cripto), `rankByPerformance` não listando altas na
+  coluna de baixas, o schema cobrando quantidade quando há ticker, o par
+  sintético BTC-BRL multiplicando preço **e** fechamento pelo câmbio.
+- **Integração** — as costuras, com o Supabase e a rede dublês: a conversão
+  `snake_case` ↔ `camelCase` (o Postgres devolve `numeric` como string), a
+  regra de não recalcular a performance de quem tem ticker, a cadeia de
+  fallback chamando a brapi **só** para o ticker que o Yahoo não cotou, o
+  cache de frescor protegendo o rate limit, e o proxy redirecionando página
+  mas não rota de API.
+- **Componente** — o que a pessoa vê: o card trocando a cotação pelo indexador
+  na renda fixa, o zero com cor neutra, cada mensagem embaixo do seu campo, a
+  grade esmaecida durante a revalidação. Aqui a API é dublê e o que se
+  verifica é o que ela **recebeu** — texto em pt-BR já convertido em número.
+- **E2E** — o que só aparece com tudo junto: o proxy mandando para
+  `/login?next=...` e devolvendo depois, o RLS entregando a carteira certa, um
+  investimento sendo criado, editado e removido de verdade no banco local.
+
+Dois comportamentos que só o teste garante, porque são invisíveis quando
+funcionam: a **remoção otimista** devolvendo o card para a lista se o banco
+recusar, e o **logout esvaziando o cache** — sem isso, o próximo login piscaria
+a carteira de quem saiu.
+
+O e2e usa a conta `demo@investcard.dev` do seed e precisa do Supabase local de
+pé (`npm run setup`). Ele reaproveita um `npm run dev` que já esteja rodando e
+sobe um se não houver. Como escreve no banco, roda em série (`workers: 1`) e
+cada ativo criado leva um nome único — e o próprio teste o remove no fim.
+
+### Cobertura
+
+`npm run test:coverage` mede o que o Vitest executa: hoje **86% das linhas**.
+O que fica de fora é o que não dá para exercitar em jsdom — a landing (Server
+Component assíncrono), os clientes Supabase e o `session.ts` —, e isso o e2e
+cobre no browser. Ou seja: a soma dos dois é maior do que o relatório mostra.
 
 ## Estrutura dos dados
 

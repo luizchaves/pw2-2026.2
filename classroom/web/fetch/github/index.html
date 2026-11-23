@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fetch</title>
+</head>
+<body>
+  <script type="module">
+    const host = 'https://api.github.com';
+    const token = 'YOUR_GITHUB_TOKEN';
+    const username = 'lucachaves';
+    const repo = 'github-repo-api';
+
+    const headers = {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${token}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+    };
+
+    // Create a repository
+    async function createRepository(data) {
+      const response = await fetch(`${host}/user/repos`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error to create repository');
+      }
+
+      return await response.json();
+    }
+
+    // Read repositories
+    async function readRepositories(username) {
+      const response = await fetch(`${host}/users/${username}/repos`, { headers });
+
+      if (!response.ok) {
+        throw new Error('Error to read repositories');
+      }
+
+      return await response.json();
+    }
+
+    // Read a repository
+    async function readRepository(username, repo) {
+      const response = await fetch(`${host}/repos/${username}/${repo}`, { headers });
+
+      if (!response.ok) {
+        throw new Error('Error to read repository');
+      }
+
+      return await response.json();
+    }
+
+    // Update a repository
+    async function updateRepository(username, repo, data) {
+      const response = await fetch(`${host}/repos/${username}/${repo}`, {
+        method: 'PATCH',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error to update repository');
+      }
+
+      return await response.json();
+    }
+
+    // Delete a repository
+    async function deleteRepository(username, repo) {
+      const response = await fetch(`${host}/repos/${username}/${repo}`, {
+        method: 'DELETE',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error('Error to delete repository');
+      }
+    }
+
+    const created = await createRepository({
+      name: repo,
+      description: 'This is your first repo!',
+      homepage: 'https://github.com',
+      private: false,
+      is_template: true,
+    });
+    console.log(created);
+
+    const repositories = await readRepositories(username);
+    console.log(repositories);
+
+    const repository = await readRepository(username, repo);
+    console.log(repository);
+
+    const updated = await updateRepository(username, repo, {
+      name: repo,
+      description: 'This is your first repository',
+      homepage: 'https://github.com',
+      private: false,
+      is_template: false,
+    });
+    console.log(updated);
+
+    await deleteRepository(username, repo);
+    console.log('Repository deleted');
+  </script>
+</body>
+</html>
